@@ -1,4 +1,5 @@
 import React, { useState, useContext, useMemo } from 'react';
+import { useCategories } from '../hooks/useData';
 import {
     View,
     Text,
@@ -22,7 +23,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'EditTransaction'>;
 
 export default function EditTransactionScreen({ route, navigation }: Props) {
     const { transaction } = route.params;
-    const { updateTransaction, deleteTransaction, categories, settings } = useContext(ExpenseContext);
+    const { updateTransaction, deleteTransaction, settings } = useContext(ExpenseContext);
+    const categories = useCategories();
 
     const [title, setTitle] = useState(transaction.title);
     const [amount, setAmount] = useState(transaction.amount.toString());
@@ -30,10 +32,7 @@ export default function EditTransactionScreen({ route, navigation }: Props) {
     const [selectedCategoryId, setSelectedCategoryId] = useState(transaction.categoryId);
 
     const isExpense = transaction.type === 'expense';
-    const filteredCategories = useMemo(() =>
-        categories.filter((c) => c.type === transaction.type),
-        [categories, transaction.type]
-    );
+    const filteredCategories = useMemo(() => categories.filter((c: any) => c.type === transaction.type), [categories, transaction.type]);
 
     const handleUpdate = () => {
         const titleCheck = validateTitle(title);

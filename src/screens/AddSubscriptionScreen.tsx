@@ -1,4 +1,5 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
+import { useCategories } from '../hooks/useData';
 import {
     View,
     Text,
@@ -53,7 +54,8 @@ export default function AddSubscriptionScreen({
 }: {
     navigation: NativeStackNavigationProp<RootStackParamList, 'AddSubscription'>;
 }) {
-    const { addSubscription, categories, settings } = useContext(ExpenseContext);
+    const { addSubscription, settings } = useContext(ExpenseContext);
+    const categories = useCategories();
 
     const [type, setType] = useState<TransactionType>('expense');
     const [title, setTitle] = useState('');
@@ -66,7 +68,7 @@ export default function AddSubscriptionScreen({
     const [monthDay, setMonthDay] = useState<string>(new Date().getDate().toString());
     const [yearMonth, setYearMonth] = useState<number>(new Date().getMonth());
 
-    const filteredCategories = categories.filter((c) => c.type === type);
+    const filteredCategories = useMemo(() => categories.filter((c: any) => c.type === type), [categories, type]);
 
     const handleAdd = () => {
         const titleCheck = validateTitle(title);

@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { useSubscriptions } from '../hooks/useData';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
@@ -13,7 +14,8 @@ type SubscriptionScreenNavigationProp = CompositeNavigationProp<
 >;
 
 export default function SubscriptionsScreen({ navigation }: { navigation: SubscriptionScreenNavigationProp }) {
-    const { settings, subscriptions, deleteSubscription } = useContext(ExpenseContext);
+    const { settings, deleteSubscription } = useContext(ExpenseContext);
+    const subscriptions = useSubscriptions();
     const isDark = settings.theme === 'dark';
 
     const handleDelete = (id: string, title: string) => {
@@ -42,7 +44,7 @@ export default function SubscriptionsScreen({ navigation }: { navigation: Subscr
                 <>
                     <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Active Subscriptions</Text>
                     <View style={styles.list}>
-                        {subscriptions.map((sub) => (
+                        {subscriptions.map((sub: any) => (
                             <View key={sub.id} style={[styles.card, isDark && styles.cardDark]}>
                                 <View style={styles.cardHeader}>
                                     <View>
@@ -72,7 +74,7 @@ export default function SubscriptionsScreen({ navigation }: { navigation: Subscr
             {/* ── Add New ── */}
             <TouchableOpacity
                 style={[styles.addButton, isDark && styles.addButtonDark]}
-                onPress={() => navigation.navigate('AddSubscription')}
+                onPress={() => navigation.navigate('AddSubscription')} // Reverted to onPress for TouchableOpacity, assuming a typo in the instruction for `renderItem`
             >
                 <Plus color="#fff" size={24} style={{ marginRight: 8 }} />
                 <Text style={styles.addButtonText}>Add New Auto-Subscription</Text>

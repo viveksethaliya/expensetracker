@@ -1,4 +1,5 @@
 import React, { useState, useContext, useMemo } from 'react';
+import { useCategories, useTemplates } from '../hooks/useData';
 import {
     View,
     Text,
@@ -24,7 +25,9 @@ export default function AddExpenseScreen({
 }: {
     navigation: NativeStackNavigationProp<RootStackParamList, 'AddExpense'>;
 }) {
-    const { addTransaction, categories, settings, templates, addTemplate } = useContext(ExpenseContext);
+    const { addTransaction, settings, addTemplate } = useContext(ExpenseContext);
+    const categories = useCategories();
+    const templates = useTemplates();
 
     const [title, setTitle] = useState('');
     const [amount, setAmount] = useState('');
@@ -32,8 +35,8 @@ export default function AddExpenseScreen({
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
     const [saveAsRecurring, setSaveAsRecurring] = useState(false);
 
-    const expenseCategories = categories.filter((c) => c.type === 'expense');
-    const recurringExpenses = useMemo(() => templates.filter(t => t.type === 'expense'), [templates]);
+    const expenseCategories = useMemo(() => categories.filter((c: any) => c.type === 'expense'), [categories]);
+    const expenseTemplates = useMemo(() => templates.filter((t: any) => t.type === 'expense'), [templates]);
 
     const handleQuickAdd = (tpl: TransactionTemplate) => {
         addTransaction({
@@ -92,11 +95,11 @@ export default function AddExpenseScreen({
             </View>
 
             {/* ── Quick Add Recurring ── */}
-            {recurringExpenses.length > 0 && (
+            {expenseTemplates.length > 0 && (
                 <View style={styles.recurringSection}>
                     <Text style={[styles.label, isDark && styles.labelDark]}>Quick Add Recurring</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recurringScroll}>
-                        {recurringExpenses.map(tpl => (
+                        {expenseTemplates.map((tpl: any) => (
                             <TouchableOpacity
                                 key={tpl.id}
                                 style={[styles.recurringChip, isDark && styles.recurringChipDark]}

@@ -1,4 +1,5 @@
 import React, { useContext, useState, useMemo } from 'react';
+import { useCategories } from '../hooks/useData';
 import {
     View,
     Text,
@@ -16,7 +17,8 @@ import { RootStackParamList } from '../navigation/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'ManageCategories'>;
 
 export default function ManageCategoriesScreen({ route }: Props) {
-    const { categories, addCategory, deleteCategory, settings } = useContext(ExpenseContext);
+    const { addCategory, deleteCategory, settings } = useContext(ExpenseContext);
+    const categories = useCategories();
     const isDark = settings.theme === 'dark';
 
     const [activeTab, setActiveTab] = useState<'expense' | 'income'>(route.params?.defaultTab ?? 'expense');
@@ -24,7 +26,7 @@ export default function ManageCategoriesScreen({ route }: Props) {
     const [newCatIcon, setNewCatIcon] = useState('');
 
     const filteredCategories = useMemo(
-        () => categories.filter((c) => c.type === activeTab),
+        () => categories.filter((c: any) => c.type === activeTab),
         [categories, activeTab]
     );
 

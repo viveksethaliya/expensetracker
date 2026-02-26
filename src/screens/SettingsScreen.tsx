@@ -1,4 +1,5 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { useTemplates } from '../hooks/useData';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert } from 'react-native';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -6,7 +7,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Tag, ChevronRight, Trash2, Bell } from 'lucide-react-native';
 import { ExpenseContext } from '../context/ExpenseContext';
 import { RootStackParamList, MainTabParamList } from '../navigation/types';
-import { configureNotifications, scheduleDailyReminder } from '../utils/notifications';
+import { configureNotifications, scheduleDailyReminder, checkNotificationHealth, startBackgroundService, stopBackgroundService } from '../utils/notifications';
+import BackgroundService from 'react-native-background-actions';
+import { Platform } from 'react-native';
 
 const CURRENCIES = ['₹', '$', '€', '£', '¥'];
 
@@ -16,9 +19,24 @@ type SettingsScreenNavigationProp = CompositeNavigationProp<
 >;
 
 export default function SettingsScreen({ navigation }: { navigation: SettingsScreenNavigationProp }) {
-    const { settings, updateSettings, templates, deleteTemplate } = useContext(ExpenseContext);
+    const { settings, updateSettings, deleteTemplate } = useContext(ExpenseContext);
+    const templates = useTemplates();
 
     const isDark = settings.theme === 'dark';
+
+    const [isNotifHealthy, setIsNotifHealthy] = useState<boolean>(false);
+    const [isBgSyncActive, setIsBgSyncActive] = useState<boolean>(Platform.OS === 'android' ? BackgroundService.isRunning() : false);
+
+    useEffect(() => {
+        const checkHealth = async () => {
+            const healthy = await checkNotificationHealth();
+            setIsNotifHealthy(healthy);
+            if (Platform.OS === 'android') {
+                setIsBgSyncActive(BackgroundService.isRunning());
+            }
+        };
+        checkHealth();
+    }, []);
 
     const handleDeleteTemplate = (id: string, name: string) => {
         Alert.alert(
@@ -84,7 +102,7 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
             {templates.length > 0 && (
                 <>
                     <Text style={styles.sectionTitle}>Recurring Templates</Text>
-                    {templates.map(tpl => (
+                    {templates.map((tpl: any) => (
                         <View key={tpl.id} style={[styles.row, isDark && styles.rowDark]}>
                             <View style={styles.rowLeft}>
                                 <Text style={[styles.rowLabel, isDark && styles.textDark, { marginRight: 8 }]}>
@@ -118,6 +136,46 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                     thumbColor={(settings.dailyReminder || false) ? (isDark ? '#fff' : '#f4f3f4') : '#f4f3f4'}
                 />
             </View>
+
+            <TouchableOpacity
+                style={[styles.row, isDark && styles.rowDark, { marginTop: 10 }]}
+                onPress={async () => {
+                    const healthy = await checkNotificationHealth();
+                    setIsNotifHealthy(healthy);
+                    Alert.alert('Health Check', healthy ? 'Notifications are fully authorized and healthy.' : 'Notifications are DANGEROUSLY disabled or missing permissions. Please turn them on in device settings.');
+                }}
+            >
+                <View style={styles.rowLeft}>
+                    <Text style={[styles.rowLabel, isDark && styles.textDark, { color: isNotifHealthy ? '#2e7d32' : '#c62828' }]}>
+                        {isNotifHealthy ? '✅ Notifications Healthy' : '❌ Notifications Disabled'}
+                    </Text>
+                </View>
+                <ChevronRight color="#888" size={20} />
+            </TouchableOpacity>
+
+            {Platform.OS === 'android' && (
+                <View style={[styles.row, isDark && styles.rowDark, { marginTop: 10 }]}>
+                    <View style={styles.rowLeft}>
+                        <View>
+                            <Text style={[styles.rowLabel, isDark && styles.textDark]}>Background Sync (Android)</Text>
+                            <Text style={styles.subText}>Keeps recurring tasks running</Text>
+                        </View>
+                    </View>
+                    <Switch
+                        value={isBgSyncActive}
+                        onValueChange={async (val) => {
+                            if (val) {
+                                await startBackgroundService();
+                            } else {
+                                await stopBackgroundService();
+                            }
+                            setIsBgSyncActive(BackgroundService.isRunning());
+                        }}
+                        trackColor={{ false: '#ccc', true: '#6200ee' }}
+                        thumbColor={isBgSyncActive ? (isDark ? '#fff' : '#f4f3f4') : '#f4f3f4'}
+                    />
+                </View>
+            )}
 
             <Text style={styles.sectionTitle}>Appearance</Text>
             <View style={[styles.row, isDark && styles.rowDark]}>

@@ -1,4 +1,5 @@
-import React, { useContext, useState, useMemo } from 'react';
+import React, { useContext, useState, useMemo, useCallback } from 'react';
+import { useFilteredTransactions, useTotals, useCategories } from '../hooks/useData';
 import {
     View,
     Text,
@@ -21,35 +22,22 @@ type HomeScreenNavigationProp = CompositeNavigationProp<
 
 export default function HomeScreen({ navigation }: { navigation: HomeScreenNavigationProp }) {
     const {
-        transactions,
-        totalIncome,
-        totalExpenses,
-        balance,
-        getCategoryById,
         settings,
     } = useContext(ExpenseContext);
+
+    const categories = useCategories();
+    const { totalIncome, totalExpenses, balance } = useTotals();
+
+    const getCategoryById = useCallback((id: string) => {
+        return categories.find((c: any) => c.id === id);
+    }, [categories]);
 
     const isDark = settings.theme === 'dark';
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
 
-    const filteredTransactions = useMemo(() => {
-        return transactions.filter(t => {
-            const matchesType = filterType === 'all' || t.type === filterType;
-            if (!matchesType) return false;
-
-            if (searchQuery.trim() === '') return true;
-            const query = searchQuery.toLowerCase();
-            const category = getCategoryById(t.categoryId);
-
-            return (
-                t.title.toLowerCase().includes(query) ||
-                (category?.name.toLowerCase() ?? '').includes(query) ||
-                (t.notes || '').toLowerCase().includes(query)
-            );
-        });
-    }, [transactions, filterType, searchQuery, getCategoryById]);
+    const filteredTransactions = useFilteredTransactions(searchQuery, filterType);
 
     const renderItem = ({ item }: { item: Transaction }) => {
         const category = getCategoryById(item.categoryId);
@@ -151,7 +139,7 @@ export default function HomeScreen({ navigation }: { navigation: HomeScreenNavig
             {filteredTransactions.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <Text style={styles.emptyText}>
-                        {transactions.length === 0 ? "No transactions yet. Add one!" : "No matching transactions found."}
+                        {filteredTransactions.length === 0 ? "No matching transactions found." : "No matching transactions found."}
                     </Text>
                 </View>
             ) : (

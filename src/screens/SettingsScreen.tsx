@@ -137,22 +137,6 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                 />
             </View>
 
-            <TouchableOpacity
-                style={[styles.row, isDark && styles.rowDark, { marginTop: 10 }]}
-                onPress={async () => {
-                    const healthy = await checkNotificationHealth();
-                    setIsNotifHealthy(healthy);
-                    Alert.alert('Health Check', healthy ? 'Notifications are fully authorized and healthy.' : 'Notifications are DANGEROUSLY disabled or missing permissions. Please turn them on in device settings.');
-                }}
-            >
-                <View style={styles.rowLeft}>
-                    <Text style={[styles.rowLabel, isDark && styles.textDark, { color: isNotifHealthy ? '#2e7d32' : '#c62828' }]}>
-                        {isNotifHealthy ? '✅ Notifications Healthy' : '❌ Notifications Disabled'}
-                    </Text>
-                </View>
-                <ChevronRight color="#888" size={20} />
-            </TouchableOpacity>
-
             {Platform.OS === 'android' && (
                 <View style={[styles.row, isDark && styles.rowDark, { marginTop: 10 }]}>
                     <View style={styles.rowLeft}>
@@ -165,11 +149,13 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                         value={isBgSyncActive}
                         onValueChange={async (val) => {
                             if (val) {
-                                await startBackgroundService();
+                                const didStart = await startBackgroundService();
+                                setIsBgSyncActive(didStart);
                             } else {
-                                await stopBackgroundService();
+                                const didStop = await stopBackgroundService();
+                                // Assuming stopBackgroundService returns false when successfully stopped
+                                setIsBgSyncActive(didStop);
                             }
-                            setIsBgSyncActive(BackgroundService.isRunning());
                         }}
                         trackColor={{ false: '#ccc', true: '#6200ee' }}
                         thumbColor={isBgSyncActive ? (isDark ? '#fff' : '#f4f3f4') : '#f4f3f4'}

@@ -69,7 +69,7 @@ export const scheduleDailyReminder = async (enabled: boolean, hour: number = 20,
                 android: {
                     channelId,
                     // Dedicated monochrome status-bar icon for Android notifications.
-                    smallIcon: 'ic_stat_notification',
+                    smallIcon: 'ic_launcher',
                     pressAction: {
                         id: 'default',
                     },
@@ -86,7 +86,7 @@ export const scheduleDailyReminder = async (enabled: boolean, hour: number = 20,
 const sleep = (time: any) => new Promise<void>((resolve) => setTimeout(() => resolve(), time));
 
 // Robust background task management for auto-subscriptions and recurring processes
-export const startBackgroundService = async () => {
+export const startBackgroundService = async (): Promise<boolean> => {
     if (Platform.OS === 'android' && !BackgroundService.isRunning()) {
         try {
             await BackgroundService.start(async (taskDataArguments) => {
@@ -102,7 +102,7 @@ export const startBackgroundService = async () => {
                 taskTitle: 'Expense Tracker Sync',
                 taskDesc: 'Syncing recurring expenses in background',
                 taskIcon: {
-                    name: 'ic_stat_notification',
+                    name: 'ic_launcher',
                     type: 'mipmap',
                 },
                 color: '#6200ee',
@@ -111,18 +111,25 @@ export const startBackgroundService = async () => {
                     delay: 1000,
                 },
             });
+            return true;
         } catch (error: any) {
             console.warn('Failed to start background service:', error);
+            Alert.alert('Background Task Failed', 'Could not run background service. Please ensure permissions are enabled.');
+            return false;
         }
     }
+    return BackgroundService.isRunning();
 };
 
-export const stopBackgroundService = async () => {
+export const stopBackgroundService = async (): Promise<boolean> => {
     if (Platform.OS === 'android' && BackgroundService.isRunning()) {
         try {
             await BackgroundService.stop();
+            return false;
         } catch (error) {
             console.warn('Failed to stop background service:', error);
+            return true;
         }
     }
+    return false;
 };

@@ -106,10 +106,19 @@ android {
             keyPassword 'android'
         }
         release {
-            storeFile file(keystoreProperties['RELEASE_STORE_FILE'] ?: 'my-release-key.keystore')
-            storePassword keystoreProperties['RELEASE_STORE_PASSWORD'] ?: ''
-            keyAlias    keystoreProperties['RELEASE_KEY_ALIAS'] ?: ''
-            keyPassword keystoreProperties['RELEASE_KEY_PASSWORD'] ?: ''
+            def storeFilePath = keystoreProperties['RELEASE_STORE_FILE'] ?: 'my-release-key.keystore'
+            if (file(storeFilePath).exists()) {
+                storeFile file(storeFilePath)
+                storePassword keystoreProperties['RELEASE_STORE_PASSWORD'] ?: ''
+                keyAlias    keystoreProperties['RELEASE_KEY_ALIAS'] ?: ''
+                keyPassword keystoreProperties['RELEASE_KEY_PASSWORD'] ?: ''
+            } else {
+                // Fallback to debug keystore for CI builds where secret isn't configured
+                storeFile file('debug.keystore')
+                storePassword 'android'
+                keyAlias 'androiddebugkey'
+                keyPassword 'android'
+            }
         }
     }
     buildTypes {

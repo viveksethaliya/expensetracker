@@ -22,10 +22,9 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: expense_tracker/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: expense_tracker
         run: npm ci
 
       - name: Set up JDK 17
@@ -36,11 +35,11 @@ jobs:
           cache: 'gradle'
 
       - name: Grant execute permission for gradlew
-        working-directory: expense_tracker/android
+        working-directory: android
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        working-directory: expense_tracker/android
+        working-directory: android
         # Using assembleRelease to build the APK
         # We don't have the keystore secret set up here yet, so it'll use the fallback if any,
         # or we could configure it to build the debug version if release requires keystore.
@@ -52,5 +51,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: expense-tracker-release
-          path: expense_tracker/android/app/build/outputs/apk/release/app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 7

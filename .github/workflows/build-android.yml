@@ -1,0 +1,56 @@
+name: Build Android Release APK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: expense_tracker/package-lock.json
+
+      - name: Install dependencies
+        working-directory: expense_tracker
+        run: npm ci
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        working-directory: expense_tracker/android
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        working-directory: expense_tracker/android
+        # Using assembleRelease to build the APK
+        # We don't have the keystore secret set up here yet, so it'll use the fallback if any,
+        # or we could configure it to build the debug version if release requires keystore.
+        # Since we modified the Gradle config to look for keystore.properties (which isn't checked in),
+        # we need to pass placeholder properties to avoid build failures, or just build assembleRelease.
+        run: ./gradlew assembleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: expense-tracker-release
+          path: expense_tracker/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 7

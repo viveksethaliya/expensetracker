@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect } from 'react';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import { scheduleDailyReminder } from '../utils/notifications';
 import { database } from '../database';
+import { Q } from '@nozbe/watermelondb';
 import WatermelonTransaction from '../database/models/Transaction';
 import WatermelonCategory from '../database/models/Category';
 import WatermelonTransactionTemplate from '../database/models/TransactionTemplate';
@@ -216,19 +217,75 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
 
     const updateCategory = async (cat: Category) => {
         await database.write(async () => {
-            const record = await database.collections.get<WatermelonCategory>('categories').find(cat.id);
-            await record.update(r => {
-                r.name = cat.name;
-                r.type = cat.type;
-                r.icon = cat.icon;
-            });
+            try {
+                const record = await database.collections.get<WatermelonCategory>('categories').find(cat.id);
+                await record.update(r => {
+                    r.name = cat.name;
+                    r.type = cat.type;
+                    r.icon = cat.icon;
+                });
+            } catch (e) {
+                console.error('Category not found for update', e);
+            }
         });
     };
 
     const deleteCategory = async (id: string) => {
         await database.write(async () => {
-            const record = await database.collections.get<WatermelonCategory>('categories').find(id);
-            await record.markAsDeleted();
+            try {
+                const categoryRecord = await database.collections.get<WatermelonCategory>('categories').find(id);
+                const categoryType = categoryRecord.type;
+
+                // Find or create a "General" fallback category of the same type
+                const generalCats = await database.collections
+                    .get<WatermelonCategory>('categories')
+                    .query(Q.where('name', 'General'), Q.where('type', categoryType))
+                    .fetch();
+
+                let generalId: string;
+                if (generalCats.length > 0) {
+                    generalId = generalCats[0].id;
+                } else {
+                    const newGeneral = await database.collections.get<WatermelonCategory>('categories').create(r => {
+                        r.name = 'General';
+                        r.type = categoryType;
+                        r.icon = '📌';
+                    });
+                    generalId = newGeneral.id;
+                }
+
+                // Reassign orphaned transactions to the fallback category
+                const orphanedTxns = await database.collections
+                    .get<WatermelonTransaction>('transactions')
+                    .query(Q.where('category_id', id))
+                    .fetch();
+                for (const txn of orphanedTxns) {
+                    await txn.update(r => { r.categoryId = generalId; });
+                }
+
+                // Delete templates referencing this category
+                const orphanedTemplates = await database.collections
+                    .get<WatermelonTransactionTemplate>('templates')
+                    .query(Q.where('category_id', id))
+                    .fetch();
+                for (const tpl of orphanedTemplates) {
+                    await tpl.markAsDeleted();
+                }
+
+                // Delete subscriptions referencing this category
+                const orphanedSubs = await database.collections
+                    .get<WatermelonAutoSubscription>('subscriptions')
+                    .query(Q.where('category_id', id))
+                    .fetch();
+                for (const sub of orphanedSubs) {
+                    await sub.markAsDeleted();
+                }
+
+                // Finally delete the category itself
+                await categoryRecord.markAsDeleted();
+            } catch (e) {
+                console.error('Failed to delete category with cascade', e);
+            }
         });
     };
 

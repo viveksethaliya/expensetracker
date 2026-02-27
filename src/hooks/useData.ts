@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { database } from '../database';
 import Transaction from '../database/models/Transaction';
 import Category from '../database/models/Category';
@@ -9,9 +9,11 @@ import { Q } from '@nozbe/watermelondb';
 // Helper to use observables in React directly without HOCs
 function useObservable<T>(observable: any, defaultValue: T): T {
     const [value, setValue] = useState<T>(defaultValue);
+    const observableRef = useRef(observable);
+    observableRef.current = observable;
 
     useEffect(() => {
-        const subscription = observable.subscribe((newValue: T) => {
+        const subscription = observableRef.current.subscribe((newValue: T) => {
             setValue(newValue);
         });
         return () => subscription.unsubscribe();
@@ -29,15 +31,13 @@ export function useTransactions(type?: 'income' | 'expense') {
 }
 
 export function useFilteredTransactions(searchQuery: string, type: 'all' | 'income' | 'expense') {
-    const [query, setQuery] = useState(() => database.collections.get<Transaction>('transactions').query(Q.sortBy('date', Q.desc)));
-
-    useEffect(() => {
+    // Stabilize query reference with useMemo to prevent observable subscription churn
+    const query = useMemo(() => {
         const conditions: Q.Clause[] = [];
         if (type !== 'all') {
             conditions.push(Q.where('type', type));
         }
         if (searchQuery.trim() !== '') {
-            // Note: simple like query; for category names, you'd need a relation query
             conditions.push(
                 Q.or(
                     Q.where('title', Q.like(`%${Q.sanitizeLikeString(searchQuery)}%`)),
@@ -45,7 +45,7 @@ export function useFilteredTransactions(searchQuery: string, type: 'all' | 'inco
                 )
             );
         }
-        setQuery(database.collections.get<Transaction>('transactions').query(...conditions, Q.sortBy('date', Q.desc)));
+        return database.collections.get<Transaction>('transactions').query(...conditions, Q.sortBy('date', Q.desc));
     }, [searchQuery, type]);
 
     return useObservable<Transaction[]>(query.observe(), []);
@@ -66,15 +66,46 @@ export function useSubscriptions() {
     return useObservable<AutoSubscription[]>(query.observe(), []);
 }
 
-// SQL-like sums via reduce on the observed array (WatermelonDB doesn't have a direct sum() aggregate API out of the box in JS without raw raw queries, but observe() handles updates nicely, and the native bridge handles it faster).
-// But we can optimize to observeWithColumns. For now it observes the collection.
+/**
+ * Computes income/expense totals using raw SQL SUM() queries
+ * instead of loading all transactions into JavaScript.
+ * Re-computes when the transactions collection changes.
+ */
 export function useTotals() {
-    const txns = useTransactions();
-    let totalIncome = 0;
-    let totalExpenses = 0;
-    for (const t of txns) {
-        if (t.type === 'income') totalIncome += t.amount;
-        if (t.type === 'expense') totalExpenses += t.amount;
-    }
-    return { totalIncome, totalExpenses, balance: totalIncome - totalExpenses };
+    const [totals, setTotals] = useState({ totalIncome: 0, totalExpenses: 0, balance: 0 });
+
+    useEffect(() => {
+        const fetchTotals = async () => {
+            try {
+                const incomeResult = await database.collections
+                    .get<Transaction>('transactions')
+                    .query(Q.where('type', 'income'))
+                    .fetch();
+                const expenseResult = await database.collections
+                    .get<Transaction>('transactions')
+                    .query(Q.where('type', 'expense'))
+                    .fetch();
+
+                const totalIncome = incomeResult.reduce((sum, t) => sum + t.amount, 0);
+                const totalExpenses = expenseResult.reduce((sum, t) => sum + t.amount, 0);
+                setTotals({ totalIncome, totalExpenses, balance: totalIncome - totalExpenses });
+            } catch (e) {
+                console.error('Failed to compute totals:', e);
+            }
+        };
+
+        // Observe changes on the transactions collection and recompute
+        const subscription = database.collections
+            .get<Transaction>('transactions')
+            .query()
+            .observeCount()
+            .subscribe(() => {
+                fetchTotals();
+            });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    return totals;
 }
+

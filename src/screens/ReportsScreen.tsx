@@ -5,8 +5,6 @@ import { PieChart } from 'react-native-chart-kit';
 import { ExpenseContext } from '../context/ExpenseContext';
 
 // ── Shared utility to generate consistent colours ──
-
-// ── Shared utility to generate consistent colours ──
 const getCategoricalColor = (index: number) => {
     const colors = ['#6200ee', '#03dac6', '#bb86fc', '#cf6679', '#ffb300', '#00b0ff', '#f50057', '#00e676'];
     return colors[index % colors.length];

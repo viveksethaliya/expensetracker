@@ -8,8 +8,7 @@ import { Tag, ChevronRight, Trash2, Bell } from 'lucide-react-native';
 import { ExpenseContext } from '../context/ExpenseContext';
 import TransactionTemplate from '../database/models/TransactionTemplate';
 import { RootStackParamList, MainTabParamList } from '../navigation/types';
-import { configureNotifications, scheduleDailyReminder, checkNotificationHealth, startBackgroundService, stopBackgroundService } from '../utils/notifications';
-import BackgroundService from 'react-native-background-actions';
+import { configureNotifications, scheduleDailyReminder, checkNotificationHealth } from '../utils/notifications';
 
 const CURRENCIES = ['₹', '$', '€', '£', '¥'];
 
@@ -25,7 +24,6 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
     const isDark = settings.theme === 'dark';
 
     const [isNotifHealthy, setIsNotifHealthy] = useState<boolean>(false);
-    const [isBgSyncActive, setIsBgSyncActive] = useState<boolean>(Platform.OS === 'android' ? BackgroundService.isRunning() : false);
 
     useEffect(() => {
         let isMounted = true;
@@ -33,9 +31,6 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
             const healthy = await checkNotificationHealth();
             if (!isMounted) return;
             setIsNotifHealthy(healthy);
-            if (Platform.OS === 'android') {
-                setIsBgSyncActive(BackgroundService.isRunning());
-            }
         };
         checkHealth();
         return () => { isMounted = false; };
@@ -143,33 +138,7 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                 />
             </View>
 
-            {
-                Platform.OS === 'android' && (
-                    <View style={[styles.row, isDark && styles.rowDark, { marginTop: 10 }]}>
-                        <View style={styles.rowLeft}>
-                            <View>
-                                <Text style={[styles.rowLabel, isDark && styles.textDark]}>Background Sync (Android)</Text>
-                                <Text style={styles.subText}>Keeps recurring tasks running</Text>
-                            </View>
-                        </View>
-                        <Switch
-                            value={isBgSyncActive}
-                            onValueChange={async (val) => {
-                                if (val) {
-                                    const didStart = await startBackgroundService();
-                                    setIsBgSyncActive(didStart);
-                                } else {
-                                    const didStop = await stopBackgroundService();
-                                    // Assuming stopBackgroundService returns false when successfully stopped
-                                    setIsBgSyncActive(didStop);
-                                }
-                            }}
-                            trackColor={{ false: '#ccc', true: '#6200ee' }}
-                            thumbColor={isBgSyncActive ? (isDark ? '#fff' : '#f4f3f4') : '#f4f3f4'}
-                        />
-                    </View>
-                )
-            }
+
 
             {/* ── Theme ── */}
             <Text style={styles.sectionTitle}>Appearance</Text>

@@ -1,10 +1,17 @@
 import { database } from './index';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
-import { DEFAULT_CATEGORIES } from '../context/ExpenseContext'; // or similar defaults
+import { DEFAULT_CATEGORIES, TransactionType, SubscriptionInterval } from '../context/ExpenseContext';
 import Transaction from './models/Transaction';
 import Category from './models/Category';
 import TransactionTemplate from './models/TransactionTemplate';
 import AutoSubscription from './models/AutoSubscription';
+import { Model } from '@nozbe/watermelondb';
+
+// Legacy AsyncStorage data shapes (pre-WatermelonDB)
+interface LegacyCategory { id: string; name: string; type: TransactionType; icon: string }
+interface LegacyTransaction { id: string; type: TransactionType; title: string; amount: number; categoryId: string; date: string; notes?: string }
+interface LegacyTemplate { id: string; type: TransactionType; title: string; amount: number; categoryId: string; notes?: string }
+interface LegacySub { id: string; type: TransactionType; title: string; amount: number; categoryId: string; interval: SubscriptionInterval; nextBillingDate: string; notes?: string; anchorDay?: number | null; anchorMonth?: number | null }
 
 const MIGRATED_KEY = '@watermelondb_migrated_v1';
 
@@ -16,13 +23,13 @@ export async function migrateFromAsyncStorage() {
         console.log('Migrating data from AsyncStorage to WatermelonDB...');
 
         // Fetch old data
-        const oldTransactions = await getItem<any[]>(STORAGE_KEYS.TRANSACTIONS) || [];
-        const oldCategories = await getItem<any[]>(STORAGE_KEYS.CATEGORIES) || DEFAULT_CATEGORIES;
-        const oldTemplates = await getItem<any[]>(STORAGE_KEYS.TEMPLATES) || [];
-        const oldSubscriptions = await getItem<any[]>(STORAGE_KEYS.SUBSCRIPTIONS) || [];
+        const oldTransactions = await getItem<LegacyTransaction[]>(STORAGE_KEYS.TRANSACTIONS) || [];
+        const oldCategories = await getItem<LegacyCategory[]>(STORAGE_KEYS.CATEGORIES) || DEFAULT_CATEGORIES;
+        const oldTemplates = await getItem<LegacyTemplate[]>(STORAGE_KEYS.TEMPLATES) || [];
+        const oldSubscriptions = await getItem<LegacySub[]>(STORAGE_KEYS.SUBSCRIPTIONS) || [];
 
         // Prepare WatermelonDB batches
-        const recordsToCreate: any[] = [];
+        const recordsToCreate: Model[] = [];
 
         // Categories
         for (const cat of oldCategories) {

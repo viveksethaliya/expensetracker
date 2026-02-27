@@ -168,14 +168,18 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
 
     const addTransaction = async (txn: Omit<Transaction, 'id'>) => {
         await database.write(async () => {
-            await database.collections.get<WatermelonTransaction>('transactions').create(record => {
-                record.type = txn.type;
-                record.title = txn.title;
-                record.amount = txn.amount;
-                record.categoryId = txn.categoryId;
-                record.date = txn.date;
-                record.notes = txn.notes;
-            });
+            try {
+                await database.collections.get<WatermelonTransaction>('transactions').create(record => {
+                    record.type = txn.type;
+                    record.title = txn.title;
+                    record.amount = txn.amount;
+                    record.categoryId = txn.categoryId;
+                    record.date = txn.date;
+                    record.notes = txn.notes;
+                });
+            } catch (e) {
+                console.error('Failed to add transaction', e);
+            }
         });
     };
 
@@ -208,11 +212,15 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
 
     const addCategory = async (cat: Omit<Category, 'id'>) => {
         await database.write(async () => {
-            await database.collections.get<WatermelonCategory>('categories').create(record => {
-                record.name = cat.name;
-                record.type = cat.type;
-                record.icon = cat.icon;
-            });
+            try {
+                await database.collections.get<WatermelonCategory>('categories').create(record => {
+                    record.name = cat.name;
+                    record.type = cat.type;
+                    record.icon = cat.icon;
+                });
+            } catch (e) {
+                console.error('Failed to add category', e);
+            }
         });
     };
 
@@ -292,43 +300,59 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
 
     const addTemplate = async (tpl: Omit<TransactionTemplate, 'id'>) => {
         await database.write(async () => {
-            await database.collections.get<WatermelonTransactionTemplate>('templates').create(record => {
-                record.type = tpl.type;
-                record.title = tpl.title;
-                record.amount = tpl.amount;
-                record.categoryId = tpl.categoryId;
-                record.notes = tpl.notes;
-            });
+            try {
+                await database.collections.get<WatermelonTransactionTemplate>('templates').create(record => {
+                    record.type = tpl.type;
+                    record.title = tpl.title;
+                    record.amount = tpl.amount;
+                    record.categoryId = tpl.categoryId;
+                    record.notes = tpl.notes;
+                });
+            } catch (e) {
+                console.error('Failed to add template', e);
+            }
         });
     };
 
     const deleteTemplate = async (id: string) => {
         await database.write(async () => {
-            const record = await database.collections.get<WatermelonTransactionTemplate>('templates').find(id);
-            await record.markAsDeleted();
+            try {
+                const record = await database.collections.get<WatermelonTransactionTemplate>('templates').find(id);
+                await record.markAsDeleted();
+            } catch (e) {
+                console.error('Template not found for delete', e);
+            }
         });
     };
 
     const addSubscription = async (sub: Omit<AutoSubscription, 'id'>) => {
         await database.write(async () => {
-            await database.collections.get<WatermelonAutoSubscription>('subscriptions').create(record => {
-                record.type = sub.type;
-                record.title = sub.title;
-                record.amount = sub.amount;
-                record.categoryId = sub.categoryId;
-                record.interval = sub.interval;
-                record.nextBillingDate = sub.nextBillingDate;
-                record.notes = sub.notes;
-                record.anchorDay = sub.anchorDay ?? null;
-                record.anchorMonth = sub.anchorMonth ?? null;
-            });
+            try {
+                await database.collections.get<WatermelonAutoSubscription>('subscriptions').create(record => {
+                    record.type = sub.type;
+                    record.title = sub.title;
+                    record.amount = sub.amount;
+                    record.categoryId = sub.categoryId;
+                    record.interval = sub.interval;
+                    record.nextBillingDate = sub.nextBillingDate;
+                    record.notes = sub.notes;
+                    record.anchorDay = sub.anchorDay ?? null;
+                    record.anchorMonth = sub.anchorMonth ?? null;
+                });
+            } catch (e) {
+                console.error('Failed to add subscription', e);
+            }
         });
     };
 
     const deleteSubscription = async (id: string) => {
         await database.write(async () => {
-            const record = await database.collections.get<WatermelonAutoSubscription>('subscriptions').find(id);
-            await record.markAsDeleted();
+            try {
+                const record = await database.collections.get<WatermelonAutoSubscription>('subscriptions').find(id);
+                await record.markAsDeleted();
+            } catch (e) {
+                console.error('Subscription not found for delete', e);
+            }
         });
     };
 

@@ -7,7 +7,7 @@ import AutoSubscription from '../database/models/AutoSubscription';
 import { Q } from '@nozbe/watermelondb';
 
 // Helper to use observables in React directly without HOCs
-function useObservable<T>(observable: any, defaultValue: T): T {
+function useObservable<T>(observable: { subscribe: (next: (value: T) => void) => { unsubscribe: () => void } }, defaultValue: T): T {
     const [value, setValue] = useState<T>(defaultValue);
     const observableRef = useRef(observable);
     observableRef.current = observable;
@@ -67,40 +67,25 @@ export function useSubscriptions() {
 }
 
 /**
- * Computes income/expense totals using raw SQL SUM() queries
- * instead of loading all transactions into JavaScript.
- * Re-computes when the transactions collection changes.
+ * Computes income/expense totals reactively.
+ * Observes the full transaction list so edits to amounts also trigger recalc.
  */
 export function useTotals() {
     const [totals, setTotals] = useState({ totalIncome: 0, totalExpenses: 0, balance: 0 });
 
     useEffect(() => {
-        const fetchTotals = async () => {
-            try {
-                const incomeResult = await database.collections
-                    .get<Transaction>('transactions')
-                    .query(Q.where('type', 'income'))
-                    .fetch();
-                const expenseResult = await database.collections
-                    .get<Transaction>('transactions')
-                    .query(Q.where('type', 'expense'))
-                    .fetch();
-
-                const totalIncome = incomeResult.reduce((sum, t) => sum + t.amount, 0);
-                const totalExpenses = expenseResult.reduce((sum, t) => sum + t.amount, 0);
-                setTotals({ totalIncome, totalExpenses, balance: totalIncome - totalExpenses });
-            } catch (e) {
-                console.error('Failed to compute totals:', e);
-            }
-        };
-
-        // Observe changes on the transactions collection and recompute
         const subscription = database.collections
             .get<Transaction>('transactions')
             .query()
-            .observeCount()
-            .subscribe(() => {
-                fetchTotals();
+            .observe()
+            .subscribe((txns) => {
+                let totalIncome = 0;
+                let totalExpenses = 0;
+                for (const t of txns) {
+                    if (t.type === 'income') totalIncome += t.amount;
+                    else if (t.type === 'expense') totalExpenses += t.amount;
+                }
+                setTotals({ totalIncome, totalExpenses, balance: totalIncome - totalExpenses });
             });
 
         return () => subscription.unsubscribe();

@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTemplates } from '../hooks/useData';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert, Platform } from 'react-native';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,7 +10,6 @@ import TransactionTemplate from '../database/models/TransactionTemplate';
 import { RootStackParamList, MainTabParamList } from '../navigation/types';
 import { configureNotifications, scheduleDailyReminder, checkNotificationHealth, startBackgroundService, stopBackgroundService } from '../utils/notifications';
 import BackgroundService from 'react-native-background-actions';
-import { Platform } from 'react-native';
 
 const CURRENCIES = ['₹', '$', '€', '£', '¥'];
 

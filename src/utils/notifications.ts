@@ -12,9 +12,10 @@ export const configureNotifications = async (): Promise<boolean> => {
             Alert.alert('Permission needed', 'Please enable notifications in your settings so we can remind you to log expenses.');
             return false;
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.warn('Notification permission request failed:', error);
-        Alert.alert('Notification Error', `Failed to configure notifications: ${error?.message || 'Unknown error'}`);
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        Alert.alert('Notification Error', `Failed to configure notifications: ${message}`);
         return false;
     }
 };
@@ -78,13 +79,14 @@ export const scheduleDailyReminder = async (enabled: boolean, hour: number = 20,
             },
             trigger,
         );
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
         console.warn('Scheduling daily reminder failed:', error);
-        Alert.alert('Notification Error', `Failed to schedule reminder: ${error?.message || 'Unknown error'}`);
+        Alert.alert('Notification Error', `Failed to schedule reminder: ${message}`);
     }
 };
 
-const sleep = (time: any) => new Promise<void>((resolve) => setTimeout(() => resolve(), time));
+const sleep = (time: number) => new Promise<void>((resolve) => setTimeout(() => resolve(), time));
 
 // Robust background task management for auto-subscriptions and recurring processes
 export const startBackgroundService = async (): Promise<boolean> => {
@@ -117,7 +119,7 @@ export const startBackgroundService = async (): Promise<boolean> => {
                 },
             });
             return true;
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.warn('Failed to start background service:', error);
             Alert.alert('Background Task Failed', 'Could not run background service. Please ensure permissions are enabled.');
             return false;

@@ -22,6 +22,8 @@ export default function ReportsScreen() {
     // Get screen width safely inside component (not strictly a hook but better practice)
     const screenWidth = Dimensions.get('window').width;
 
+    const isDark = settings.theme === 'dark';
+
     const [timePeriod, setTimePeriod] = useState<'all' | 'month'>('month');
 
     const filteredTransactions = useMemo(() => {
@@ -72,13 +74,11 @@ export default function ReportsScreen() {
             name: item.name,
             total: item.total,
             color: getCategoricalColor(index),
-            legendFontColor: '#555',
+            legendFontColor: isDark ? '#ccc' : '#555',
             legendFontSize: 13,
             icon: item.icon,
         }));
-    }, [filteredTransactions, getCategoryById]);
-
-    const isDark = settings.theme === 'dark';
+    }, [filteredTransactions, getCategoryById, isDark]);
 
     return (
         <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 }}>

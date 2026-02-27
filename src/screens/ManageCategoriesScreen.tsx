@@ -51,7 +51,7 @@ export default function ManageCategoriesScreen({ route }: Props) {
     const handleDeleteCategory = (id: string, name: string) => {
         Alert.alert(
             'Delete Category',
-            `Are you sure you want to delete "${name}"? Transactions using this category may become Uncategorized.`,
+            `Are you sure you want to delete "${name}"? Transactions using this category will be reassigned to "General".`,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {

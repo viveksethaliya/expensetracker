@@ -360,18 +360,6 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
         });
     };
 
-    if (isLoading) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: settings.theme === 'dark' ? '#121212' : '#fff' }}>
-                <Text style={{ fontSize: 40, marginBottom: 12 }}>💰</Text>
-                <Text style={{ fontSize: 22, fontWeight: '700', color: settings.theme === 'dark' ? '#efefef' : '#333', marginBottom: 8 }}>
-                    Expense Friend
-                </Text>
-                <ActivityIndicator size="large" color="#6200ee" />
-            </View>
-        );
-    }
-
     const contextValue = useMemo(() => ({
         addTransaction,
         updateTransaction,
@@ -401,6 +389,19 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
         updateSettings,
         isLoading
     ]);
+
+    if (isLoading) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: settings.theme === 'dark' ? '#121212' : '#fff' }}>
+                <Text style={{ fontSize: 40, marginBottom: 12 }}>💰</Text>
+                <Text style={{ fontSize: 22, fontWeight: '700', color: settings.theme === 'dark' ? '#efefef' : '#333', marginBottom: 8 }}>
+                    Expense Friend
+                </Text>
+                <ActivityIndicator size="large" color="#6200ee" />
+            </View>
+        );
+    }
+
 
     return (
         <ExpenseContext.Provider value={contextValue}>

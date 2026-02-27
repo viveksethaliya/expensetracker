@@ -1,6 +1,7 @@
 import notifee, { TriggerType, RepeatFrequency, TimestampTrigger, AndroidImportance, AuthorizationStatus } from '@notifee/react-native';
 import { Alert, Platform } from 'react-native';
 import BackgroundService from 'react-native-background-actions';
+import { processSubscriptions } from './processSubscriptions';
 
 export const configureNotifications = async (): Promise<boolean> => {
     try {
@@ -91,10 +92,14 @@ export const startBackgroundService = async (): Promise<boolean> => {
         try {
             await BackgroundService.start(async (taskDataArguments) => {
                 await new Promise(async (resolve) => {
-                    for (let i = 0; BackgroundService.isRunning(); i++) {
-                        // Periodic check (e.g. process auto subscriptions every hour)
-                        // This proves the daemon is alive. For a real app, query SQLite and generate transactions here.
-                        await sleep(3600000); // Wait 1 hour between cycles
+                    // Process immediately on start, then every 15 minutes
+                    while (BackgroundService.isRunning()) {
+                        try {
+                            await processSubscriptions();
+                        } catch (e) {
+                            console.warn('[BackgroundService] processSubscriptions error:', e);
+                        }
+                        await sleep(900000); // Check every 15 minutes
                     }
                 });
             }, {

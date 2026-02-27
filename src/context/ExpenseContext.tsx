@@ -7,6 +7,7 @@ import WatermelonCategory from '../database/models/Category';
 import WatermelonTransactionTemplate from '../database/models/TransactionTemplate';
 import WatermelonAutoSubscription from '../database/models/AutoSubscription';
 import { migrateFromAsyncStorage } from '../database/migration';
+import { processSubscriptions } from '../utils/processSubscriptions';
 
 // ═══════════════════════════════════════════════════════════════
 // ── Type definitions ──────────────────────────────────────────
@@ -144,6 +145,9 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
 
             const storedSettings = await getItem<AppSettings>(STORAGE_KEYS.SETTINGS);
             if (storedSettings) setSettings(storedSettings);
+
+            // Process any due subscriptions on app launch
+            try { await processSubscriptions(); } catch (e) { console.warn('Startup subscription processing failed:', e); }
 
             setIsLoading(false);
         };

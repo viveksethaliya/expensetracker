@@ -40,16 +40,16 @@ jobs:
 
       - name: Build with Gradle
         working-directory: android
-        # Using assembleRelease to build the APK
-        # We don't have the keystore secret set up here yet, so it'll use the fallback if any,
-        # or we could configure it to build the debug version if release requires keystore.
-        # Since we modified the Gradle config to look for keystore.properties (which isn't checked in),
-        # we need to pass placeholder properties to avoid build failures, or just build assembleRelease.
-        run: ./gradlew assembleRelease
+        # We pass -PreactNativeArchitectures to ensure it splits them if supported, 
+        # or we rely on the standard assembleRelease which we'll configure via gradle.properties if needed.
+        # A simpler way to force splits from CLI is passing -PenableSeparateBuildPerCPUArchitecture=true
+        run: ./gradlew assembleRelease -PenableSeparateBuildPerCPUArchitecture=true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: expense-tracker-release
-          path: android/app/build/outputs/apk/release/app-release.apk
+          name: expense-tracker-release-apks
+          # Upload the entire release folder because it will now contain multiple files:
+          # app-arm64-v8a-release.apk, app-armeabi-v7a-release.apk, app-x86_64-release.apk, etc.
+          path: android/app/build/outputs/apk/release/*.apk
           retention-days: 7

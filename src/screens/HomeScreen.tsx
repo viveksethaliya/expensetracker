@@ -47,7 +47,17 @@ export default function HomeScreen({ navigation }: { navigation: HomeScreenNavig
         return (
             <TouchableOpacity
                 style={[styles.card, isDark && styles.cardDark]}
-                onPress={() => navigation.navigate('EditTransaction', { transaction: item })}
+                onPress={() => navigation.navigate('EditTransaction', {
+                    transaction: {
+                        id: item.id,
+                        type: item.type as 'income' | 'expense',
+                        title: item.title,
+                        amount: item.amount,
+                        categoryId: item.categoryId,
+                        date: item.date,
+                        notes: item.notes,
+                    }
+                })}
             >
                 <View style={styles.cardLeft}>
                     <Text style={styles.cardIcon}>{category?.icon ?? '📌'}</Text>

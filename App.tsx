@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Home, PieChart, Settings, Repeat } from 'lucide-react-native';
 
 import { ExpenseProvider, ExpenseContext } from './src/context/ExpenseContext';
@@ -135,9 +136,11 @@ function RootNavigator() {
 
 export default function App() {
   return (
-    <ExpenseProvider>
-      <RootNavigator />
-    </ExpenseProvider>
+    <SafeAreaProvider>
+      <ExpenseProvider>
+        <RootNavigator />
+      </ExpenseProvider>
+    </SafeAreaProvider>
   );
 }
 

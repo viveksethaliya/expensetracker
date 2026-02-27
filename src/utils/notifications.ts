@@ -60,7 +60,22 @@ export const scheduleDailyReminder = async (enabled: boolean, hour: number = 20,
             type: TriggerType.TIMESTAMP,
             timestamp: date.getTime(),
             repeatFrequency: RepeatFrequency.DAILY,
+            alarmManager: {
+                allowWhileIdle: true,
+            },
         };
+
+        const batteryRestriction = await notifee.isBatteryOptimizationEnabled();
+        if (batteryRestriction) {
+            Alert.alert(
+                'Battery Restrictions',
+                'Your device restricts background alarms. To ensure the 8:00 PM reminder arrives on time, please disable battery optimization for Expense Friend.',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Settings', onPress: async () => await notifee.openBatteryOptimizationSettings() },
+                ]
+            );
+        }
 
         await notifee.createTriggerNotification(
             {

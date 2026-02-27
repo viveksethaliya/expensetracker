@@ -5,19 +5,24 @@ import Category from '../database/models/Category';
 import TransactionTemplate from '../database/models/TransactionTemplate';
 import AutoSubscription from '../database/models/AutoSubscription';
 import { Q } from '@nozbe/watermelondb';
+import { Query, Model } from '@nozbe/watermelondb';
 
-// Helper to use observables in React directly without HOCs
-function useObservable<T>(observable: { subscribe: (next: (value: T) => void) => { unsubscribe: () => void } }, defaultValue: T): T {
-    const [value, setValue] = useState<T>(defaultValue);
-    const observableRef = useRef(observable);
-    observableRef.current = observable;
+// Helper to use observables in React directly without HOCs and prevent subscription churn
+function useObservableQuery<RecordType extends Model>(query: Query<RecordType>, defaultValue: RecordType[]): RecordType[] {
+    const [value, setValue] = useState<RecordType[]>(defaultValue);
+    const queryRef = useRef(query);
+
+    // Keep the ref updated with the latest query
+    useEffect(() => {
+        queryRef.current = query;
+    }, [query]);
 
     useEffect(() => {
-        const subscription = observableRef.current.subscribe((newValue: T) => {
+        const subscription = queryRef.current.observe().subscribe((newValue: RecordType[]) => {
             setValue(newValue);
         });
         return () => subscription.unsubscribe();
-    }, [observable]);
+    }, [query]);
 
     return value;
 }
@@ -27,7 +32,7 @@ export function useTransactions(type?: 'income' | 'expense') {
         const t = database.collections.get<Transaction>('transactions');
         return type ? t.query(Q.where('type', type), Q.sortBy('date', Q.desc)) : t.query(Q.sortBy('date', Q.desc));
     });
-    return useObservable<Transaction[]>(query.observe(), []);
+    return useObservableQuery<Transaction>(query, []);
 }
 
 export function useFilteredTransactions(searchQuery: string, type: 'all' | 'income' | 'expense') {
@@ -48,22 +53,22 @@ export function useFilteredTransactions(searchQuery: string, type: 'all' | 'inco
         return database.collections.get<Transaction>('transactions').query(...conditions, Q.sortBy('date', Q.desc));
     }, [searchQuery, type]);
 
-    return useObservable<Transaction[]>(query.observe(), []);
+    return useObservableQuery<Transaction>(query, []);
 }
 
 export function useCategories() {
     const [query] = useState(() => database.collections.get<Category>('categories').query());
-    return useObservable<Category[]>(query.observe(), []);
+    return useObservableQuery<Category>(query, []);
 }
 
 export function useTemplates() {
     const [query] = useState(() => database.collections.get<TransactionTemplate>('templates').query());
-    return useObservable<TransactionTemplate[]>(query.observe(), []);
+    return useObservableQuery<TransactionTemplate>(query, []);
 }
 
 export function useSubscriptions() {
     const [query] = useState(() => database.collections.get<AutoSubscription>('subscriptions').query());
-    return useObservable<AutoSubscription[]>(query.observe(), []);
+    return useObservableQuery<AutoSubscription>(query, []);
 }
 
 /**

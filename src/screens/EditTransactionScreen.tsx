@@ -8,6 +8,8 @@ import {
     StyleSheet,
     Alert,
     ScrollView,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Trash2 } from 'lucide-react-native';
@@ -76,102 +78,104 @@ export default function EditTransactionScreen({ route, navigation }: Props) {
     const isDark = settings.theme === 'dark';
 
     return (
-        <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 }}>
-            {/* ── Header banner ── */}
-            <View style={[
-                styles.banner,
-                isExpense ? (isDark ? styles.bannerExpenseDark : styles.bannerExpense) : (isDark ? styles.bannerIncomeDark : styles.bannerIncome)
-            ]}>
-                <Text style={styles.bannerIcon}>{isExpense ? '🧾' : '💰'}</Text>
-                <Text style={[
-                    styles.bannerTitle,
-                    isExpense ? (isDark ? styles.bannerTitleExpenseDark : styles.bannerTitleExpense) : (isDark ? styles.bannerTitleIncomeDark : styles.bannerTitleIncome)
-                ]}>Edit {isExpense ? 'Expense' : 'Income'}</Text>
-                <Text style={[
-                    styles.bannerSub,
-                    isExpense ? (isDark ? styles.bannerSubExpenseDark : styles.bannerSubExpense) : (isDark ? styles.bannerSubIncomeDark : styles.bannerSubIncome)
-                ]}>Update your entry details</Text>
-            </View>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 }}>
+                {/* ── Header banner ── */}
+                <View style={[
+                    styles.banner,
+                    isExpense ? (isDark ? styles.bannerExpenseDark : styles.bannerExpense) : (isDark ? styles.bannerIncomeDark : styles.bannerIncome)
+                ]}>
+                    <Text style={styles.bannerIcon}>{isExpense ? '🧾' : '💰'}</Text>
+                    <Text style={[
+                        styles.bannerTitle,
+                        isExpense ? (isDark ? styles.bannerTitleExpenseDark : styles.bannerTitleExpense) : (isDark ? styles.bannerTitleIncomeDark : styles.bannerTitleIncome)
+                    ]}>Edit {isExpense ? 'Expense' : 'Income'}</Text>
+                    <Text style={[
+                        styles.bannerSub,
+                        isExpense ? (isDark ? styles.bannerSubExpenseDark : styles.bannerSubExpense) : (isDark ? styles.bannerSubIncomeDark : styles.bannerSubIncome)
+                    ]}>Update your entry details</Text>
+                </View>
 
-            {/* ── Title ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Title</Text>
-            <TextInput
-                placeholder="e.g. Coffee, Salary"
-                placeholderTextColor={isDark ? '#555' : '#999'}
-                value={title}
-                onChangeText={setTitle}
-                style={[styles.input, isDark && styles.inputDark]}
-            />
+                {/* ── Title ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Title</Text>
+                <TextInput
+                    placeholder="e.g. Coffee, Salary"
+                    placeholderTextColor={isDark ? '#555' : '#999'}
+                    value={title}
+                    onChangeText={setTitle}
+                    style={[styles.input, isDark && styles.inputDark]}
+                />
 
-            {/* ── Amount ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Amount</Text>
-            <TextInput
-                placeholder="0.00"
-                placeholderTextColor={isDark ? '#555' : '#999'}
-                keyboardType="numeric"
-                value={amount}
-                onChangeText={setAmount}
-                style={[styles.input, isDark && styles.inputDark]}
-            />
+                {/* ── Amount ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Amount</Text>
+                <TextInput
+                    placeholder="0.00"
+                    placeholderTextColor={isDark ? '#555' : '#999'}
+                    keyboardType="numeric"
+                    value={amount}
+                    onChangeText={setAmount}
+                    style={[styles.input, isDark && styles.inputDark]}
+                />
 
-            {/* ── Category picker ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Category</Text>
-            <View style={styles.categoryGrid}>
-                {filteredCategories.map((cat: Category) => {
-                    const isActive = selectedCategoryId === cat.id;
-                    return (
-                        <TouchableOpacity
-                            key={cat.id}
-                            onPress={() => setSelectedCategoryId(cat.id)}
-                            style={[
-                                styles.categoryChip,
-                                isDark && styles.categoryChipDark,
-                                isActive && (isDark ? styles.categoryChipActiveDark : styles.categoryChipActive),
-                            ]}
-                        >
-                            <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                            <Text
+                {/* ── Category picker ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Category</Text>
+                <View style={styles.categoryGrid}>
+                    {filteredCategories.map((cat: Category) => {
+                        const isActive = selectedCategoryId === cat.id;
+                        return (
+                            <TouchableOpacity
+                                key={cat.id}
+                                onPress={() => setSelectedCategoryId(cat.id)}
                                 style={[
-                                    styles.categoryName,
-                                    isDark && styles.categoryNameDark,
-                                    isActive && (isDark ? styles.categoryNameActiveDark : styles.categoryNameActive),
+                                    styles.categoryChip,
+                                    isDark && styles.categoryChipDark,
+                                    isActive && (isDark ? styles.categoryChipActiveDark : styles.categoryChipActive),
                                 ]}
                             >
-                                {cat.name}
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
-            </View>
+                                <Text style={styles.categoryIcon}>{cat.icon}</Text>
+                                <Text
+                                    style={[
+                                        styles.categoryName,
+                                        isDark && styles.categoryNameDark,
+                                        isActive && (isDark ? styles.categoryNameActiveDark : styles.categoryNameActive),
+                                    ]}
+                                >
+                                    {cat.name}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
 
-            {/* ── Notes ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Notes (optional)</Text>
-            <TextInput
-                placeholder="Any extra details..."
-                placeholderTextColor={isDark ? '#555' : '#999'}
-                value={notes}
-                onChangeText={setNotes}
-                multiline
-                style={[styles.input, isDark && styles.inputDark, { height: 80, textAlignVertical: 'top' }]}
-            />
+                {/* ── Notes ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Notes (optional)</Text>
+                <TextInput
+                    placeholder="Any extra details..."
+                    placeholderTextColor={isDark ? '#555' : '#999'}
+                    value={notes}
+                    onChangeText={setNotes}
+                    multiline
+                    style={[styles.input, isDark && styles.inputDark, { height: 80, textAlignVertical: 'top' }]}
+                />
 
-            {/* ── Actions ── */}
-            <View style={styles.actionRow}>
-                <TouchableOpacity
-                    style={[styles.deleteBtn, isDark && styles.deleteBtnDark]}
-                    onPress={handleDelete}
-                >
-                    <Trash2 color={isDark ? "#ff8a80" : "#d32f2f"} size={22} />
-                </TouchableOpacity>
+                {/* ── Actions ── */}
+                <View style={styles.actionRow}>
+                    <TouchableOpacity
+                        style={[styles.deleteBtn, isDark && styles.deleteBtnDark]}
+                        onPress={handleDelete}
+                    >
+                        <Trash2 color={isDark ? "#ff8a80" : "#d32f2f"} size={22} />
+                    </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={[styles.submitBtn, isDark && styles.submitBtnDark]}
-                    onPress={handleUpdate}
-                >
-                    <Text style={styles.submitText}>Save Changes</Text>
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
+                    <TouchableOpacity
+                        style={[styles.submitBtn, isDark && styles.submitBtnDark]}
+                        onPress={handleUpdate}
+                    >
+                        <Text style={styles.submitText}>Save Changes</Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 

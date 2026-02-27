@@ -28,14 +28,17 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
     const [isBgSyncActive, setIsBgSyncActive] = useState<boolean>(Platform.OS === 'android' ? BackgroundService.isRunning() : false);
 
     useEffect(() => {
+        let isMounted = true;
         const checkHealth = async () => {
             const healthy = await checkNotificationHealth();
+            if (!isMounted) return;
             setIsNotifHealthy(healthy);
             if (Platform.OS === 'android') {
                 setIsBgSyncActive(BackgroundService.isRunning());
             }
         };
         checkHealth();
+        return () => { isMounted = false; };
     }, []);
 
     const handleDeleteTemplate = (id: string, name: string) => {

@@ -9,6 +9,8 @@ import {
     Alert,
     ScrollView,
     Switch,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -82,127 +84,129 @@ export default function AddIncomeScreen({
     const isDark = settings.theme === 'dark';
 
     return (
-        <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 }}>
-            {/* ── Header banner ── */}
-            <View style={[styles.banner, isDark && styles.bannerDark]}>
-                <Text style={styles.bannerIcon}>💰</Text>
-                <Text style={[styles.bannerTitle, isDark && styles.bannerTitleDark]}>Record Income</Text>
-                <Text style={[styles.bannerSub, isDark && styles.bannerSubDark]}>Track your earnings & revenue</Text>
-            </View>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 }}>
+                {/* ── Header banner ── */}
+                <View style={[styles.banner, isDark && styles.bannerDark]}>
+                    <Text style={styles.bannerIcon}>💰</Text>
+                    <Text style={[styles.bannerTitle, isDark && styles.bannerTitleDark]}>Record Income</Text>
+                    <Text style={[styles.bannerSub, isDark && styles.bannerSubDark]}>Track your earnings & revenue</Text>
+                </View>
 
-            {/* ── Quick Add Recurring ── */}
-            {incomeTemplates.length > 0 && (
-                <View style={styles.recurringSection}>
-                    <Text style={[styles.label, isDark && styles.labelDark]}>Quick Add Recurring</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recurringScroll}>
-                        {incomeTemplates.map((tpl: TransactionTemplate) => (
+                {/* ── Quick Add Recurring ── */}
+                {incomeTemplates.length > 0 && (
+                    <View style={styles.recurringSection}>
+                        <Text style={[styles.label, isDark && styles.labelDark]}>Quick Add Recurring</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recurringScroll}>
+                            {incomeTemplates.map((tpl: TransactionTemplate) => (
+                                <TouchableOpacity
+                                    key={tpl.id}
+                                    style={[styles.recurringChip, isDark && styles.recurringChipDark]}
+                                    onPress={() => handleQuickAdd(tpl)}
+                                >
+                                    <Text style={[styles.recurringChipTitle, isDark && styles.textDark]}>{tpl.title}</Text>
+                                    <Text style={styles.recurringChipAmount}>
+                                        {settings.currency}{tpl.amount.toFixed(0)}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                )}
+
+                {/* ── Source ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Income Source</Text>
+                <TextInput
+                    placeholder="e.g. Monthly Salary, Freelance Project"
+                    placeholderTextColor={isDark ? '#555' : '#999'}
+                    value={source}
+                    onChangeText={setSource}
+                    style={[styles.input, isDark && styles.inputDark]}
+                />
+
+                {/* ── Amount ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Amount Received</Text>
+                <TextInput
+                    placeholder="0.00"
+                    placeholderTextColor={isDark ? '#555' : '#999'}
+                    keyboardType="numeric"
+                    value={amount}
+                    onChangeText={setAmount}
+                    style={[styles.input, isDark && styles.inputDark]}
+                />
+
+                {/* ── Category picker ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Income Type</Text>
+                <TouchableOpacity
+                    style={[styles.row, isDark && styles.rowDark]}
+                    onPress={() => navigation.navigate('ManageCategories', { defaultTab: 'income' })}
+                >
+                    <View style={styles.rowLeft}>
+                        <Tag color={isDark ? '#efefef' : '#333'} size={20} style={{ marginRight: 12 }} />
+                        <Text style={[styles.rowLabel, isDark && styles.textDark]}>Manage Categories</Text>
+                    </View>
+                    <ChevronRight color="#888" size={20} />
+                </TouchableOpacity>
+                <View style={styles.categoryGrid}>
+                    {incomeCategories.map((cat: Category) => {
+                        const isActive = selectedCategoryId === cat.id;
+
+                        return (
                             <TouchableOpacity
-                                key={tpl.id}
-                                style={[styles.recurringChip, isDark && styles.recurringChipDark]}
-                                onPress={() => handleQuickAdd(tpl)}
-                            >
-                                <Text style={[styles.recurringChipTitle, isDark && styles.textDark]}>{tpl.title}</Text>
-                                <Text style={styles.recurringChipAmount}>
-                                    {settings.currency}{tpl.amount.toFixed(0)}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                </View>
-            )}
-
-            {/* ── Source ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Income Source</Text>
-            <TextInput
-                placeholder="e.g. Monthly Salary, Freelance Project"
-                placeholderTextColor={isDark ? '#555' : '#999'}
-                value={source}
-                onChangeText={setSource}
-                style={[styles.input, isDark && styles.inputDark]}
-            />
-
-            {/* ── Amount ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Amount Received</Text>
-            <TextInput
-                placeholder="0.00"
-                placeholderTextColor={isDark ? '#555' : '#999'}
-                keyboardType="numeric"
-                value={amount}
-                onChangeText={setAmount}
-                style={[styles.input, isDark && styles.inputDark]}
-            />
-
-            {/* ── Category picker ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Income Type</Text>
-            <TouchableOpacity
-                style={[styles.row, isDark && styles.rowDark]}
-                onPress={() => navigation.navigate('ManageCategories', { defaultTab: 'income' })}
-            >
-                <View style={styles.rowLeft}>
-                    <Tag color={isDark ? '#efefef' : '#333'} size={20} style={{ marginRight: 12 }} />
-                    <Text style={[styles.rowLabel, isDark && styles.textDark]}>Manage Categories</Text>
-                </View>
-                <ChevronRight color="#888" size={20} />
-            </TouchableOpacity>
-            <View style={styles.categoryGrid}>
-                {incomeCategories.map((cat: Category) => {
-                    const isActive = selectedCategoryId === cat.id;
-
-                    return (
-                        <TouchableOpacity
-                            key={cat.id}
-                            onPress={() => setSelectedCategoryId(cat.id)}
-                            style={[
-                                styles.categoryChip,
-                                isDark && styles.categoryChipDark,
-                                isActive && (isDark ? styles.categoryChipActiveDark : styles.categoryChipActive),
-                            ]}
-                        >
-                            <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                            <Text
+                                key={cat.id}
+                                onPress={() => setSelectedCategoryId(cat.id)}
                                 style={[
-                                    styles.categoryName,
-                                    isDark && styles.categoryNameDark,
-                                    isActive && (isDark ? styles.categoryNameActiveDark : styles.categoryNameActive),
+                                    styles.categoryChip,
+                                    isDark && styles.categoryChipDark,
+                                    isActive && (isDark ? styles.categoryChipActiveDark : styles.categoryChipActive),
                                 ]}
                             >
-                                {cat.name}
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
-            </View>
-
-            {/* ── Description ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Description (optional)</Text>
-            <TextInput
-                placeholder="e.g. February salary, client payment..."
-                placeholderTextColor={isDark ? '#555' : '#999'}
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                style={[styles.input, isDark && styles.inputDark, { height: 80, textAlignVertical: 'top' }]}
-            />
-
-            {/* ── Save as Recurring ── */}
-            <View style={[styles.toggleRow, isDark && styles.toggleRowDark]}>
-                <View>
-                    <Text style={[styles.toggleLabel, isDark && styles.textDark]}>Save as Recurring</Text>
-                    <Text style={[styles.toggleSub, isDark && styles.subTextDark]}>Add to quick-add templates</Text>
+                                <Text style={styles.categoryIcon}>{cat.icon}</Text>
+                                <Text
+                                    style={[
+                                        styles.categoryName,
+                                        isDark && styles.categoryNameDark,
+                                        isActive && (isDark ? styles.categoryNameActiveDark : styles.categoryNameActive),
+                                    ]}
+                                >
+                                    {cat.name}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
                 </View>
-                <Switch
-                    value={saveAsRecurring}
-                    onValueChange={setSaveAsRecurring}
-                    trackColor={{ false: '#ccc', true: '#2e7d32' }}
-                    thumbColor={isDark ? '#fff' : '#f4f3f4'}
-                />
-            </View>
 
-            {/* ── Submit ── */}
-            <TouchableOpacity style={[styles.submitBtn, isDark && styles.submitBtnDark]} onPress={handleAdd}>
-                <Text style={styles.submitText}>Add Income</Text>
-            </TouchableOpacity>
-        </ScrollView>
+                {/* ── Description ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Description (optional)</Text>
+                <TextInput
+                    placeholder="e.g. February salary, client payment..."
+                    placeholderTextColor={isDark ? '#555' : '#999'}
+                    value={description}
+                    onChangeText={setDescription}
+                    multiline
+                    style={[styles.input, isDark && styles.inputDark, { height: 80, textAlignVertical: 'top' }]}
+                />
+
+                {/* ── Save as Recurring ── */}
+                <View style={[styles.toggleRow, isDark && styles.toggleRowDark]}>
+                    <View>
+                        <Text style={[styles.toggleLabel, isDark && styles.textDark]}>Save as Recurring</Text>
+                        <Text style={[styles.toggleSub, isDark && styles.subTextDark]}>Add to quick-add templates</Text>
+                    </View>
+                    <Switch
+                        value={saveAsRecurring}
+                        onValueChange={setSaveAsRecurring}
+                        trackColor={{ false: '#ccc', true: '#2e7d32' }}
+                        thumbColor={isDark ? '#fff' : '#f4f3f4'}
+                    />
+                </View>
+
+                {/* ── Submit ── */}
+                <TouchableOpacity style={[styles.submitBtn, isDark && styles.submitBtnDark]} onPress={handleAdd}>
+                    <Text style={styles.submitText}>Add Income</Text>
+                </TouchableOpacity>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 

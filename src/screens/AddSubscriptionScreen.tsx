@@ -8,6 +8,8 @@ import {
     StyleSheet,
     Alert,
     ScrollView,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -132,190 +134,192 @@ export default function AddSubscriptionScreen({
     const isDark = settings.theme === 'dark';
 
     return (
-        <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 }}>
-            {/* ── Type Toggle ── */}
-            <View style={styles.toggleRow}>
-                <TouchableOpacity
-                    style={[styles.toggleBtn, type === 'expense' ? styles.toggleActiveExp : undefined]}
-                    onPress={() => { setType('expense'); setSelectedCategoryId(''); }}
-                >
-                    <Text style={[styles.toggleText, type === 'expense' && styles.toggleTextActive]}>Expense</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.toggleBtn, type === 'income' ? styles.toggleActiveInc : undefined]}
-                    onPress={() => { setType('income'); setSelectedCategoryId(''); }}
-                >
-                    <Text style={[styles.toggleText, type === 'income' && styles.toggleTextActive]}>Income</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* ── Title ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Title</Text>
-            <TextInput
-                placeholder="e.g. Netflix, Rent, Salary..."
-                placeholderTextColor={isDark ? '#555' : '#999'}
-                value={title}
-                onChangeText={setTitle}
-                style={[styles.input, isDark && styles.inputDark]}
-            />
-
-            {/* ── Amount ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Amount</Text>
-            <TextInput
-                placeholder="0.00"
-                placeholderTextColor={isDark ? '#555' : '#999'}
-                keyboardType="numeric"
-                value={amount}
-                onChangeText={setAmount}
-                style={[styles.input, isDark && styles.inputDark]}
-            />
-
-            {/* ── Interval ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Frequency</Text>
-            <View style={styles.intervalGrid}>
-                {INTERVALS.map(int => (
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 }}>
+                {/* ── Type Toggle ── */}
+                <View style={styles.toggleRow}>
                     <TouchableOpacity
-                        key={int.value}
-                        style={[
-                            styles.intervalChip,
-                            isDark && styles.intervalChipDark,
-                            interval === int.value && (isDark ? styles.intervalChipActiveDark : styles.intervalChipActive)
-                        ]}
-                        onPress={() => setInterval(int.value)}
+                        style={[styles.toggleBtn, type === 'expense' ? styles.toggleActiveExp : undefined]}
+                        onPress={() => { setType('expense'); setSelectedCategoryId(''); }}
                     >
-                        <Text style={[
-                            styles.intervalText,
-                            isDark && styles.intervalTextDark,
-                            interval === int.value && styles.intervalTextActive
-                        ]}>
-                            {int.label}
-                        </Text>
+                        <Text style={[styles.toggleText, type === 'expense' && styles.toggleTextActive]}>Expense</Text>
                     </TouchableOpacity>
-                ))}
-            </View>
-
-            {/* ── Start Details ── */}
-            {interval === 'weekly' && (
-                <>
-                    <Text style={[styles.label, isDark && styles.labelDark]}>Starting Day of Week</Text>
-                    <View style={styles.intervalGrid}>
-                        {WEEK_DAYS.map(day => (
-                            <TouchableOpacity
-                                key={day.value}
-                                style={[
-                                    styles.intervalChip,
-                                    isDark && styles.intervalChipDark,
-                                    weekDay === day.value && (isDark ? styles.intervalChipActiveDark : styles.intervalChipActive)
-                                ]}
-                                onPress={() => setWeekDay(day.value)}
-                            >
-                                <Text style={[
-                                    styles.intervalText,
-                                    isDark && styles.intervalTextDark,
-                                    weekDay === day.value && styles.intervalTextActive
-                                ]}>{day.label}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                </>
-            )}
-
-            {interval === 'monthly' && (
-                <>
-                    <Text style={[styles.label, isDark && styles.labelDark]}>Starting Day of Month (1-31)</Text>
-                    <TextInput
-                        placeholder="e.g. 1"
-                        placeholderTextColor={isDark ? '#555' : '#999'}
-                        keyboardType="numeric"
-                        value={monthDay}
-                        onChangeText={setMonthDay}
-                        style={[styles.input, isDark && styles.inputDark]}
-                    />
-                </>
-            )}
-
-            {interval === 'yearly' && (
-                <>
-                    <Text style={[styles.label, isDark && styles.labelDark]}>Starting Month</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 18 }}>
-                        {MONTHS.map(m => (
-                            <TouchableOpacity
-                                key={m.value}
-                                style={[
-                                    styles.intervalChip,
-                                    { minWidth: 60, marginRight: 8 },
-                                    isDark && styles.intervalChipDark,
-                                    yearMonth === m.value && (isDark ? styles.intervalChipActiveDark : styles.intervalChipActive)
-                                ]}
-                                onPress={() => setYearMonth(m.value)}
-                            >
-                                <Text style={[
-                                    styles.intervalText,
-                                    isDark && styles.intervalTextDark,
-                                    yearMonth === m.value && styles.intervalTextActive
-                                ]}>{m.label}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                </>
-            )}
-
-            {/* ── Category picker ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Category</Text>
-            <TouchableOpacity
-                style={[styles.row, isDark && styles.rowDark]}
-                onPress={() => navigation.navigate('ManageCategories', { defaultTab: type })}
-            >
-                <View style={styles.rowLeft}>
-                    <Tag color={isDark ? '#efefef' : '#333'} size={20} style={{ marginRight: 12 }} />
-                    <Text style={[styles.rowLabel, isDark && styles.textDark]}>Manage Categories</Text>
+                    <TouchableOpacity
+                        style={[styles.toggleBtn, type === 'income' ? styles.toggleActiveInc : undefined]}
+                        onPress={() => { setType('income'); setSelectedCategoryId(''); }}
+                    >
+                        <Text style={[styles.toggleText, type === 'income' && styles.toggleTextActive]}>Income</Text>
+                    </TouchableOpacity>
                 </View>
-                <ChevronRight color="#888" size={20} />
-            </TouchableOpacity>
-            <View style={styles.categoryGrid}>
-                {filteredCategories.map((cat: Category) => {
-                    const isActive = selectedCategoryId === cat.id;
-                    return (
+
+                {/* ── Title ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Title</Text>
+                <TextInput
+                    placeholder="e.g. Netflix, Rent, Salary..."
+                    placeholderTextColor={isDark ? '#555' : '#999'}
+                    value={title}
+                    onChangeText={setTitle}
+                    style={[styles.input, isDark && styles.inputDark]}
+                />
+
+                {/* ── Amount ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Amount</Text>
+                <TextInput
+                    placeholder="0.00"
+                    placeholderTextColor={isDark ? '#555' : '#999'}
+                    keyboardType="numeric"
+                    value={amount}
+                    onChangeText={setAmount}
+                    style={[styles.input, isDark && styles.inputDark]}
+                />
+
+                {/* ── Interval ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Frequency</Text>
+                <View style={styles.intervalGrid}>
+                    {INTERVALS.map(int => (
                         <TouchableOpacity
-                            key={cat.id}
-                            onPress={() => setSelectedCategoryId(cat.id)}
+                            key={int.value}
                             style={[
-                                styles.categoryChip,
-                                isDark && styles.categoryChipDark,
-                                isActive && (isDark ? styles.categoryChipActiveDark : styles.categoryChipActive),
+                                styles.intervalChip,
+                                isDark && styles.intervalChipDark,
+                                interval === int.value && (isDark ? styles.intervalChipActiveDark : styles.intervalChipActive)
                             ]}
+                            onPress={() => setInterval(int.value)}
                         >
-                            <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                            <Text
-                                style={[
-                                    styles.categoryName,
-                                    isDark && styles.categoryNameDark,
-                                    isActive && (isDark ? styles.categoryNameActiveDark : styles.categoryNameActive),
-                                ]}
-                            >
-                                {cat.name}
+                            <Text style={[
+                                styles.intervalText,
+                                isDark && styles.intervalTextDark,
+                                interval === int.value && styles.intervalTextActive
+                            ]}>
+                                {int.label}
                             </Text>
                         </TouchableOpacity>
-                    );
-                })}
-            </View>
+                    ))}
+                </View>
 
-            {/* ── Notes ── */}
-            <Text style={[styles.label, isDark && styles.labelDark]}>Notes (optional)</Text>
-            <TextInput
-                placeholder="Any extra details..."
-                placeholderTextColor={isDark ? '#555' : '#999'}
-                value={notes}
-                onChangeText={setNotes}
-                multiline
-                style={[styles.input, isDark && styles.inputDark, { height: 80, textAlignVertical: 'top' }]}
-            />
+                {/* ── Start Details ── */}
+                {interval === 'weekly' && (
+                    <>
+                        <Text style={[styles.label, isDark && styles.labelDark]}>Starting Day of Week</Text>
+                        <View style={styles.intervalGrid}>
+                            {WEEK_DAYS.map(day => (
+                                <TouchableOpacity
+                                    key={day.value}
+                                    style={[
+                                        styles.intervalChip,
+                                        isDark && styles.intervalChipDark,
+                                        weekDay === day.value && (isDark ? styles.intervalChipActiveDark : styles.intervalChipActive)
+                                    ]}
+                                    onPress={() => setWeekDay(day.value)}
+                                >
+                                    <Text style={[
+                                        styles.intervalText,
+                                        isDark && styles.intervalTextDark,
+                                        weekDay === day.value && styles.intervalTextActive
+                                    ]}>{day.label}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </>
+                )}
 
-            {/* ── Submit ── */}
-            <TouchableOpacity style={[styles.submitBtn, isDark && styles.submitBtnDark]} onPress={handleAdd}>
-                <Text style={styles.submitText}>Save Auto-Subscription</Text>
-            </TouchableOpacity>
-        </ScrollView>
+                {interval === 'monthly' && (
+                    <>
+                        <Text style={[styles.label, isDark && styles.labelDark]}>Starting Day of Month (1-31)</Text>
+                        <TextInput
+                            placeholder="e.g. 1"
+                            placeholderTextColor={isDark ? '#555' : '#999'}
+                            keyboardType="numeric"
+                            value={monthDay}
+                            onChangeText={setMonthDay}
+                            style={[styles.input, isDark && styles.inputDark]}
+                        />
+                    </>
+                )}
+
+                {interval === 'yearly' && (
+                    <>
+                        <Text style={[styles.label, isDark && styles.labelDark]}>Starting Month</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 18 }}>
+                            {MONTHS.map(m => (
+                                <TouchableOpacity
+                                    key={m.value}
+                                    style={[
+                                        styles.intervalChip,
+                                        { minWidth: 60, marginRight: 8 },
+                                        isDark && styles.intervalChipDark,
+                                        yearMonth === m.value && (isDark ? styles.intervalChipActiveDark : styles.intervalChipActive)
+                                    ]}
+                                    onPress={() => setYearMonth(m.value)}
+                                >
+                                    <Text style={[
+                                        styles.intervalText,
+                                        isDark && styles.intervalTextDark,
+                                        yearMonth === m.value && styles.intervalTextActive
+                                    ]}>{m.label}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </>
+                )}
+
+                {/* ── Category picker ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Category</Text>
+                <TouchableOpacity
+                    style={[styles.row, isDark && styles.rowDark]}
+                    onPress={() => navigation.navigate('ManageCategories', { defaultTab: type })}
+                >
+                    <View style={styles.rowLeft}>
+                        <Tag color={isDark ? '#efefef' : '#333'} size={20} style={{ marginRight: 12 }} />
+                        <Text style={[styles.rowLabel, isDark && styles.textDark]}>Manage Categories</Text>
+                    </View>
+                    <ChevronRight color="#888" size={20} />
+                </TouchableOpacity>
+                <View style={styles.categoryGrid}>
+                    {filteredCategories.map((cat: Category) => {
+                        const isActive = selectedCategoryId === cat.id;
+                        return (
+                            <TouchableOpacity
+                                key={cat.id}
+                                onPress={() => setSelectedCategoryId(cat.id)}
+                                style={[
+                                    styles.categoryChip,
+                                    isDark && styles.categoryChipDark,
+                                    isActive && (isDark ? styles.categoryChipActiveDark : styles.categoryChipActive),
+                                ]}
+                            >
+                                <Text style={styles.categoryIcon}>{cat.icon}</Text>
+                                <Text
+                                    style={[
+                                        styles.categoryName,
+                                        isDark && styles.categoryNameDark,
+                                        isActive && (isDark ? styles.categoryNameActiveDark : styles.categoryNameActive),
+                                    ]}
+                                >
+                                    {cat.name}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+
+                {/* ── Notes ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Notes (optional)</Text>
+                <TextInput
+                    placeholder="Any extra details..."
+                    placeholderTextColor={isDark ? '#555' : '#999'}
+                    value={notes}
+                    onChangeText={setNotes}
+                    multiline
+                    style={[styles.input, isDark && styles.inputDark, { height: 80, textAlignVertical: 'top' }]}
+                />
+
+                {/* ── Submit ── */}
+                <TouchableOpacity style={[styles.submitBtn, isDark && styles.submitBtnDark]} onPress={handleAdd}>
+                    <Text style={styles.submitText}>Save Auto-Subscription</Text>
+                </TouchableOpacity>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 

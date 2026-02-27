@@ -26,7 +26,7 @@ export default function ManageCategoriesScreen({ route }: Props) {
     const [newCatIcon, setNewCatIcon] = useState('');
 
     const filteredCategories = useMemo(
-        () => categories.filter((c: any) => c.type === activeTab),
+        () => categories.filter((c: Category) => c.type === activeTab),
         [categories, activeTab]
     );
 

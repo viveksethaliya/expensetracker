@@ -13,6 +13,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ArrowDownCircle, ArrowUpCircle, Search } from 'lucide-react-native';
 import { ExpenseContext, Transaction } from '../context/ExpenseContext';
+import Category from '../database/models/Category';
 import { RootStackParamList, MainTabParamList } from '../navigation/types';
 
 type HomeScreenNavigationProp = CompositeNavigationProp<
@@ -29,7 +30,7 @@ export default function HomeScreen({ navigation }: { navigation: HomeScreenNavig
     const { totalIncome, totalExpenses, balance } = useTotals();
 
     const getCategoryById = useCallback((id: string) => {
-        return categories.find((c: any) => c.id === id);
+        return categories.find((c: Category) => c.id === id);
     }, [categories]);
 
     const isDark = settings.theme === 'dark';

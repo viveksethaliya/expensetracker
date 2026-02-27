@@ -35,8 +35,8 @@ export default function AddExpenseScreen({
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
     const [saveAsRecurring, setSaveAsRecurring] = useState(false);
 
-    const expenseCategories = useMemo(() => categories.filter((c: any) => c.type === 'expense'), [categories]);
-    const expenseTemplates = useMemo(() => templates.filter((t: any) => t.type === 'expense'), [templates]);
+    const expenseCategories = useMemo(() => categories.filter((c: Category) => c.type === 'expense'), [categories]);
+    const expenseTemplates = useMemo(() => templates.filter((t: TransactionTemplate) => t.type === 'expense'), [templates]);
 
     const handleQuickAdd = (tpl: TransactionTemplate) => {
         addTransaction({
@@ -99,7 +99,7 @@ export default function AddExpenseScreen({
                 <View style={styles.recurringSection}>
                     <Text style={[styles.label, isDark && styles.labelDark]}>Quick Add Recurring</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recurringScroll}>
-                        {expenseTemplates.map((tpl: any) => (
+                        {expenseTemplates.map((tpl: TransactionTemplate) => (
                             <TouchableOpacity
                                 key={tpl.id}
                                 style={[styles.recurringChip, isDark && styles.recurringChipDark]}

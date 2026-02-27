@@ -32,7 +32,7 @@ export default function EditTransactionScreen({ route, navigation }: Props) {
     const [selectedCategoryId, setSelectedCategoryId] = useState(transaction.categoryId);
 
     const isExpense = transaction.type === 'expense';
-    const filteredCategories = useMemo(() => categories.filter((c: any) => c.type === transaction.type), [categories, transaction.type]);
+    const filteredCategories = useMemo(() => categories.filter((c: Category) => c.type === transaction.type), [categories, transaction.type]);
 
     const handleUpdate = () => {
         const titleCheck = validateTitle(title);

@@ -31,8 +31,8 @@ export default function AddIncomeScreen({
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
     const [saveAsRecurring, setSaveAsRecurring] = useState(false);
 
-    const incomeCategories = useMemo(() => categories.filter((c: any) => c.type === 'income'), [categories]);
-    const incomeTemplates = useMemo(() => templates.filter((t: any) => t.type === 'income'), [templates]);
+    const incomeCategories = useMemo(() => categories.filter((c: Category) => c.type === 'income'), [categories]);
+    const incomeTemplates = useMemo(() => templates.filter((t: TransactionTemplate) => t.type === 'income'), [templates]);
 
     const handleQuickAdd = (tpl: TransactionTemplate) => {
         addTransaction({
@@ -95,7 +95,7 @@ export default function AddIncomeScreen({
                 <View style={styles.recurringSection}>
                     <Text style={[styles.label, isDark && styles.labelDark]}>Quick Add Recurring</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recurringScroll}>
-                        {incomeTemplates.map((tpl: any) => (
+                        {incomeTemplates.map((tpl: TransactionTemplate) => (
                             <TouchableOpacity
                                 key={tpl.id}
                                 style={[styles.recurringChip, isDark && styles.recurringChipDark]}

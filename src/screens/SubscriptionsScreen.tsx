@@ -6,6 +6,7 @@ import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { CreditCard, Plus, Trash2 } from 'lucide-react-native';
 import { ExpenseContext } from '../context/ExpenseContext';
+import AutoSubscription from '../database/models/AutoSubscription';
 import { RootStackParamList, MainTabParamList } from '../navigation/types';
 
 type SubscriptionScreenNavigationProp = CompositeNavigationProp<
@@ -44,7 +45,7 @@ export default function SubscriptionsScreen({ navigation }: { navigation: Subscr
                 <>
                     <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Active Subscriptions</Text>
                     <View style={styles.list}>
-                        {subscriptions.map((sub: any) => (
+                        {subscriptions.map((sub: AutoSubscription) => (
                             <View key={sub.id} style={[styles.card, isDark && styles.cardDark]}>
                                 <View style={styles.cardHeader}>
                                     <View>

@@ -6,6 +6,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Tag, ChevronRight, Trash2, Bell } from 'lucide-react-native';
 import { ExpenseContext } from '../context/ExpenseContext';
+import TransactionTemplate from '../database/models/TransactionTemplate';
 import { RootStackParamList, MainTabParamList } from '../navigation/types';
 import { configureNotifications, scheduleDailyReminder, checkNotificationHealth, startBackgroundService, stopBackgroundService } from '../utils/notifications';
 import BackgroundService from 'react-native-background-actions';
@@ -102,7 +103,7 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
             {templates.length > 0 && (
                 <>
                     <Text style={styles.sectionTitle}>Recurring Templates</Text>
-                    {templates.map((tpl: any) => (
+                    {templates.map((tpl: TransactionTemplate) => (
                         <View key={tpl.id} style={[styles.row, isDark && styles.rowDark]}>
                             <View style={styles.rowLeft}>
                                 <Text style={[styles.rowLabel, isDark && styles.textDark, { marginRight: 8 }]}>

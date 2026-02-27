@@ -68,7 +68,7 @@ export default function AddSubscriptionScreen({
     const [monthDay, setMonthDay] = useState<string>(new Date().getDate().toString());
     const [yearMonth, setYearMonth] = useState<number>(new Date().getMonth());
 
-    const filteredCategories = useMemo(() => categories.filter((c: any) => c.type === type), [categories, type]);
+    const filteredCategories = useMemo(() => categories.filter((c: Category) => c.type === type), [categories, type]);
 
     const handleAdd = () => {
         const titleCheck = validateTitle(title);

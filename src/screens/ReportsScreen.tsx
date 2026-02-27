@@ -3,6 +3,8 @@ import { useTransactions, useCategories } from '../hooks/useData';
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 import { ExpenseContext } from '../context/ExpenseContext';
+import Transaction from '../database/models/Transaction';
+import Category from '../database/models/Category';
 
 // ── Shared utility to generate consistent colours ──
 const getCategoricalColor = (index: number) => {
@@ -15,7 +17,7 @@ export default function ReportsScreen() {
     const transactions = useTransactions();
     const categories = useCategories();
 
-    const getCategoryById = useCallback((id: string) => categories.find((c: any) => c.id === id), [categories]);
+    const getCategoryById = useCallback((id: string) => categories.find((c: Category) => c.id === id), [categories]);
 
     // Get screen width safely inside component (not strictly a hook but better practice)
     const screenWidth = Dimensions.get('window').width;
@@ -28,28 +30,28 @@ export default function ReportsScreen() {
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonth = now.getMonth();
-        return transactions.filter((t: any) => {
+        return transactions.filter((t: Transaction) => {
             const date = new Date(t.date);
             return date.getFullYear() === currentYear && date.getMonth() === currentMonth;
         });
     }, [transactions, timePeriod]);
 
     const periodIncome = useMemo(() =>
-        filteredTransactions.filter((t: any) => t.type === 'income').reduce((acc: number, t: any) => acc + t.amount, 0),
+        filteredTransactions.filter((t: Transaction) => t.type === 'income').reduce((acc: number, t: Transaction) => acc + t.amount, 0),
         [filteredTransactions]
     );
     const periodExpenses = useMemo(() =>
-        filteredTransactions.filter((t: any) => t.type === 'expense').reduce((acc: number, t: any) => acc + t.amount, 0),
+        filteredTransactions.filter((t: Transaction) => t.type === 'expense').reduce((acc: number, t: Transaction) => acc + t.amount, 0),
         [filteredTransactions]
     );
     const periodBalance = periodIncome - periodExpenses;
 
     // ── Prepare Pie Chart Data ──
     const chartData = useMemo(() => {
-        const expenseTxns = filteredTransactions.filter((t: any) => t.type === 'expense');
+        const expenseTxns = filteredTransactions.filter((t: Transaction) => t.type === 'expense');
         const map: Record<string, { total: number; name: string; icon: string }> = {};
 
-        expenseTxns.forEach((t: any) => {
+        expenseTxns.forEach((t: Transaction) => {
             const key = t.categoryId;
             if (!map[key]) {
                 const cat = getCategoryById(key);

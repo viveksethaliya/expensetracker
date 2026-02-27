@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { useSubscriptions } from '../hooks/useData';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, FlatList } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -44,9 +44,15 @@ export default function SubscriptionsScreen({ navigation }: { navigation: Subscr
             ) : (
                 <>
                     <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Active Subscriptions</Text>
-                    <View style={styles.list}>
-                        {subscriptions.map((sub: AutoSubscription) => (
-                            <View key={sub.id} style={[styles.card, isDark && styles.cardDark]}>
+                    <FlatList
+                        data={subscriptions}
+                        keyExtractor={sub => sub.id}
+                        contentContainerStyle={styles.list}
+                        initialNumToRender={10}
+                        maxToRenderPerBatch={5}
+                        windowSize={5}
+                        renderItem={({ item: sub }: { item: AutoSubscription }) => (
+                            <View style={[styles.card, isDark && styles.cardDark]}>
                                 <View style={styles.cardHeader}>
                                     <View>
                                         <Text style={[styles.cardTitle, isDark && styles.textDark]}>{sub.title}</Text>
@@ -71,8 +77,8 @@ export default function SubscriptionsScreen({ navigation }: { navigation: Subscr
                                     </TouchableOpacity>
                                 </View>
                             </View>
-                        ))}
-                    </View>
+                        )}
+                    />
                 </>
             )}
 

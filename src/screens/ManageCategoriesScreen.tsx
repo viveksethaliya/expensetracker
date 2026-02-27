@@ -126,6 +126,9 @@ export default function ManageCategoriesScreen({ route }: Props) {
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
                 contentContainerStyle={styles.list}
+                initialNumToRender={10}
+                maxToRenderPerBatch={5}
+                windowSize={5}
             />
 
             {/* ── Add Category Floating Footer ── */}

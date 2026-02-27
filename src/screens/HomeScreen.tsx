@@ -161,6 +161,9 @@ export default function HomeScreen({ navigation }: { navigation: HomeScreenNavig
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
                     contentContainerStyle={styles.list}
+                    initialNumToRender={10}
+                    maxToRenderPerBatch={5}
+                    windowSize={5}
                 />
             )}
 

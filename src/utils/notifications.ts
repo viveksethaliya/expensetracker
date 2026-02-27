@@ -1,6 +1,5 @@
 import notifee, { TriggerType, RepeatFrequency, TimestampTrigger, AndroidImportance, AuthorizationStatus } from '@notifee/react-native';
 import { Alert, Platform } from 'react-native';
-import BackgroundService from 'react-native-background-actions';
 import { processSubscriptions } from './processSubscriptions';
 
 export const configureNotifications = async (): Promise<boolean> => {
@@ -86,58 +85,11 @@ export const scheduleDailyReminder = async (enabled: boolean, hour: number = 20,
     }
 };
 
-const sleep = (time: number) => new Promise<void>((resolve) => setTimeout(() => resolve(), time));
-
-// Robust background task management for auto-subscriptions and recurring processes
 export const startBackgroundService = async (): Promise<boolean> => {
-    if (Platform.OS === 'android' && !BackgroundService.isRunning()) {
-        try {
-            await BackgroundService.start(async (taskDataArguments) => {
-                await new Promise<void>(async (resolve) => {
-                    // Process immediately on start, then every 15 minutes
-                    while (BackgroundService.isRunning()) {
-                        try {
-                            await processSubscriptions();
-                        } catch (e) {
-                            console.warn('[BackgroundService] processSubscriptions error:', e);
-                        }
-                        await sleep(900000); // Check every 15 minutes
-                    }
-                    resolve();
-                });
-            }, {
-                taskName: 'ExpenseTrackerTask',
-                taskTitle: 'Expense Friend Sync',
-                taskDesc: 'Syncing recurring expenses in background',
-                taskIcon: {
-                    name: 'ic_launcher',
-                    type: 'mipmap',
-                },
-                color: '#6200ee',
-                linkingURI: 'expensetracker://', // Adjust if using deep links
-                parameters: {
-                    delay: 1000,
-                },
-            });
-            return true;
-        } catch (error: unknown) {
-            console.warn('Failed to start background service:', error);
-            Alert.alert('Background Task Failed', 'Could not run background service. Please ensure permissions are enabled.');
-            return false;
-        }
-    }
-    return BackgroundService.isRunning();
+    // Background service removed at user request to get rid of sticky notification
+    return false;
 };
 
 export const stopBackgroundService = async (): Promise<boolean> => {
-    if (Platform.OS === 'android' && BackgroundService.isRunning()) {
-        try {
-            await BackgroundService.stop();
-            return false;
-        } catch (error) {
-            console.warn('Failed to stop background service:', error);
-            return true;
-        }
-    }
     return false;
 };

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import { scheduleDailyReminder } from '../utils/notifications';
 import { database } from '../database';
@@ -330,6 +331,18 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
             await record.markAsDeleted();
         });
     };
+
+    if (isLoading) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: settings.theme === 'dark' ? '#121212' : '#fff' }}>
+                <Text style={{ fontSize: 40, marginBottom: 12 }}>💰</Text>
+                <Text style={{ fontSize: 22, fontWeight: '700', color: settings.theme === 'dark' ? '#efefef' : '#333', marginBottom: 8 }}>
+                    Expense Friend
+                </Text>
+                <ActivityIndicator size="large" color="#6200ee" />
+            </View>
+        );
+    }
 
     return (
         <ExpenseContext.Provider

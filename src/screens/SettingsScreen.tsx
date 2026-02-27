@@ -98,7 +98,6 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                 <ChevronRight color="#888" size={20} />
             </TouchableOpacity>
 
-            {/* ── Theme ── */}
             {templates.length > 0 && (
                 <>
                     <Text style={styles.sectionTitle}>Recurring Templates</Text>
@@ -137,32 +136,35 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                 />
             </View>
 
-            {Platform.OS === 'android' && (
-                <View style={[styles.row, isDark && styles.rowDark, { marginTop: 10 }]}>
-                    <View style={styles.rowLeft}>
-                        <View>
-                            <Text style={[styles.rowLabel, isDark && styles.textDark]}>Background Sync (Android)</Text>
-                            <Text style={styles.subText}>Keeps recurring tasks running</Text>
+            {
+                Platform.OS === 'android' && (
+                    <View style={[styles.row, isDark && styles.rowDark, { marginTop: 10 }]}>
+                        <View style={styles.rowLeft}>
+                            <View>
+                                <Text style={[styles.rowLabel, isDark && styles.textDark]}>Background Sync (Android)</Text>
+                                <Text style={styles.subText}>Keeps recurring tasks running</Text>
+                            </View>
                         </View>
+                        <Switch
+                            value={isBgSyncActive}
+                            onValueChange={async (val) => {
+                                if (val) {
+                                    const didStart = await startBackgroundService();
+                                    setIsBgSyncActive(didStart);
+                                } else {
+                                    const didStop = await stopBackgroundService();
+                                    // Assuming stopBackgroundService returns false when successfully stopped
+                                    setIsBgSyncActive(didStop);
+                                }
+                            }}
+                            trackColor={{ false: '#ccc', true: '#6200ee' }}
+                            thumbColor={isBgSyncActive ? (isDark ? '#fff' : '#f4f3f4') : '#f4f3f4'}
+                        />
                     </View>
-                    <Switch
-                        value={isBgSyncActive}
-                        onValueChange={async (val) => {
-                            if (val) {
-                                const didStart = await startBackgroundService();
-                                setIsBgSyncActive(didStart);
-                            } else {
-                                const didStop = await stopBackgroundService();
-                                // Assuming stopBackgroundService returns false when successfully stopped
-                                setIsBgSyncActive(didStop);
-                            }
-                        }}
-                        trackColor={{ false: '#ccc', true: '#6200ee' }}
-                        thumbColor={isBgSyncActive ? (isDark ? '#fff' : '#f4f3f4') : '#f4f3f4'}
-                    />
-                </View>
-            )}
+                )
+            }
 
+            {/* ── Theme ── */}
             <Text style={styles.sectionTitle}>Appearance</Text>
             <View style={[styles.row, isDark && styles.rowDark]}>
                 <Text style={[styles.rowLabel, isDark && styles.textDark]}>Dark Mode</Text>
@@ -182,7 +184,7 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                 <Text style={[styles.aboutText, isDark && styles.textDark]}>Expense Friend v1.1.0</Text>
                 <Text style={styles.aboutSub}>Track your income & spending simply.</Text>
             </View>
-        </ScrollView>
+        </ScrollView >
     );
 }
 

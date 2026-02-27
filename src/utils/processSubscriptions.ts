@@ -75,39 +75,57 @@ export async function processSubscriptions(): Promise<number> {
             .query()
             .fetch();
 
-        // Filter to only those that are due (nextBillingDate <= now)
-        const dueSubs = allSubs.filter(sub => {
-            const billingDate = new Date(sub.nextBillingDate);
-            return billingDate.getTime() <= now.getTime();
-        });
+        const transactionsCollection = database.collections.get<Transaction>('transactions');
+        const batchOperations: any[] = [];
 
-        if (dueSubs.length === 0) return 0;
+        for (const sub of allSubs) {
+            let currentBilling = new Date(sub.nextBillingDate);
+            let subUpdated = false;
 
-        await database.write(async () => {
-            for (const sub of dueSubs) {
-                // 1. Create the transaction
-                await database.collections.get<Transaction>('transactions').create(record => {
-                    record.type = sub.type;
-                    record.title = sub.title;
-                    record.amount = sub.amount;
-                    record.categoryId = sub.categoryId;
-                    record.date = now.toISOString();
-                    record.notes = sub.notes ? `[Auto] ${sub.notes}` : '[Auto-Subscription]';
-                });
+            // Catch-up loop: generate a transaction for every missed interval
+            while (currentBilling.getTime() <= now.getTime()) {
+                // 1. Prepare to create the transaction
+                batchOperations.push(
+                    transactionsCollection.prepareCreate(record => {
+                        record.type = sub.type;
+                        record.title = sub.title;
+                        record.amount = sub.amount;
+                        record.categoryId = sub.categoryId;
+                        // Use the historical billing date for the transaction, not 'now'
+                        record.date = currentBilling.toISOString();
+                        record.notes = sub.notes ? `[Auto] ${sub.notes}` : '[Auto-Subscription]';
+                    })
+                );
 
-                // 2. Advance the subscription's nextBillingDate
-                const currentBilling = new Date(sub.nextBillingDate);
-                const nextBilling = advanceDate(currentBilling, sub.interval, sub.anchorDay, sub.anchorMonth);
-
-                await sub.update(record => {
-                    record.nextBillingDate = nextBilling.toISOString();
-                });
-
+                // 2. Advance the billing date for the next iteration
+                currentBilling = advanceDate(currentBilling, sub.interval, sub.anchorDay, sub.anchorMonth);
+                subUpdated = true;
                 processedCount++;
-            }
-        });
 
-        if (__DEV__) console.log(`[processSubscriptions] Created ${processedCount} transactions from due subscriptions.`);
+                // Safety valve: prevent infinite loops in case of corrupt old dates
+                if (processedCount > 500) break;
+            }
+
+            // 3. Prepare to update the subscription's nextBillingDate if it advanced
+            if (subUpdated) {
+                batchOperations.push(
+                    sub.prepareUpdate(record => {
+                        record.nextBillingDate = currentBilling.toISOString();
+                    })
+                );
+            }
+        }
+
+        // Execute all collected operations in a single fast batch
+        if (batchOperations.length > 0) {
+            await database.write(async () => {
+                await database.batch(...batchOperations);
+            });
+        }
+
+        if (__DEV__ && processedCount > 0) {
+            console.log(`[processSubscriptions] Created ${processedCount} transactions from due subscriptions.`);
+        }
     } catch (error) {
         console.error('[processSubscriptions] Failed:', error);
     }

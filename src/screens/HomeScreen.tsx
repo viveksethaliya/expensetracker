@@ -139,7 +139,9 @@ export default function HomeScreen({ navigation }: { navigation: HomeScreenNavig
             {filteredTransactions.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <Text style={styles.emptyText}>
-                        {filteredTransactions.length === 0 ? "No matching transactions found." : "No matching transactions found."}
+                        {searchQuery.trim() !== '' || filterType !== 'all'
+                            ? 'No matching transactions found.'
+                            : 'No transactions yet — tap + to add one!'}
                     </Text>
                 </View>
             ) : (

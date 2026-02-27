@@ -65,7 +65,7 @@ export const scheduleDailyReminder = async (enabled: boolean, hour: number = 20,
         await notifee.createTriggerNotification(
             {
                 id: 'daily-reminder', // Fixed ID so it replaces itself
-                title: 'Expense Tracker',
+                title: 'Expense Friend',
                 body: 'Did you spend anything today? Don\'t forget to log it!',
                 android: {
                     channelId,
@@ -104,7 +104,7 @@ export const startBackgroundService = async (): Promise<boolean> => {
                 });
             }, {
                 taskName: 'ExpenseTrackerTask',
-                taskTitle: 'Expense Tracker Sync',
+                taskTitle: 'Expense Friend Sync',
                 taskDesc: 'Syncing recurring expenses in background',
                 taskIcon: {
                     name: 'ic_launcher',

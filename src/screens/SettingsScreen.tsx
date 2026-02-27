@@ -179,7 +179,7 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
             {/* ── About ── */}
             <Text style={styles.sectionTitle}>About</Text>
             <View style={[styles.aboutBox, isDark && styles.rowDark]}>
-                <Text style={[styles.aboutText, isDark && styles.textDark]}>Expense Tracker v1.0</Text>
+                <Text style={[styles.aboutText, isDark && styles.textDark]}>Expense Friend v1.1.0</Text>
                 <Text style={styles.aboutSub}>Track your income & spending simply.</Text>
             </View>
         </ScrollView>

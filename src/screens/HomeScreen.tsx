@@ -159,6 +159,8 @@ export default function HomeScreen({ navigation }: { navigation: HomeScreenNavig
                 <TouchableOpacity
                     style={[styles.fab, styles.fabIncome]}
                     onPress={() => navigation.navigate('AddIncome')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Add Income"
                 >
                     <ArrowDownCircle color="#fff" size={20} style={styles.fabIconSvg} />
                     <Text style={styles.fabLabel}>Income</Text>
@@ -166,6 +168,8 @@ export default function HomeScreen({ navigation }: { navigation: HomeScreenNavig
                 <TouchableOpacity
                     style={[styles.fab, styles.fabExpense]}
                     onPress={() => navigation.navigate('AddExpense')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Add Expense"
                 >
                     <ArrowUpCircle color="#fff" size={20} style={styles.fabIconSvg} />
                     <Text style={styles.fabLabel}>Expense</Text>

@@ -163,6 +163,8 @@ export default function EditTransactionScreen({ route, navigation }: Props) {
                     <TouchableOpacity
                         style={[styles.deleteBtn, isDark && styles.deleteBtnDark]}
                         onPress={handleDelete}
+                        accessibilityRole="button"
+                        accessibilityLabel="Delete entry"
                     >
                         <Trash2 color={isDark ? "#ff8a80" : "#d32f2f"} size={22} />
                     </TouchableOpacity>

@@ -62,7 +62,11 @@ export default function SubscriptionsScreen({ navigation }: { navigation: Subscr
                                 </View>
                                 <View style={styles.cardFooter}>
                                     <Text style={styles.cardNotes}>Next: {new Date(sub.nextBillingDate).toLocaleDateString()}</Text>
-                                    <TouchableOpacity onPress={() => handleDelete(sub.id, sub.title)}>
+                                    <TouchableOpacity
+                                        onPress={() => handleDelete(sub.id, sub.title)}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={`Delete subscription ${sub.title}`}
+                                    >
                                         <Trash2 color="#ef5350" size={18} />
                                     </TouchableOpacity>
                                 </View>

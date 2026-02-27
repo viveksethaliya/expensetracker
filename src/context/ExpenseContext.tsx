@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useMemo } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import { scheduleDailyReminder } from '../utils/notifications';
@@ -372,24 +372,38 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
         );
     }
 
+    const contextValue = useMemo(() => ({
+        addTransaction,
+        updateTransaction,
+        deleteTransaction,
+        addCategory,
+        updateCategory,
+        deleteCategory,
+        addTemplate,
+        deleteTemplate,
+        addSubscription,
+        deleteSubscription,
+        settings,
+        updateSettings,
+        isLoading,
+    }), [
+        addTransaction,
+        updateTransaction,
+        deleteTransaction,
+        addCategory,
+        updateCategory,
+        deleteCategory,
+        addTemplate,
+        deleteTemplate,
+        addSubscription,
+        deleteSubscription,
+        settings,
+        updateSettings,
+        isLoading
+    ]);
+
     return (
-        <ExpenseContext.Provider
-            value={{
-                addTransaction,
-                updateTransaction,
-                deleteTransaction,
-                addCategory,
-                updateCategory,
-                deleteCategory,
-                addTemplate,
-                deleteTemplate,
-                addSubscription,
-                deleteSubscription,
-                settings,
-                updateSettings,
-                isLoading,
-            }}
-        >
+        <ExpenseContext.Provider value={contextValue}>
             {children}
         </ExpenseContext.Provider>
     );

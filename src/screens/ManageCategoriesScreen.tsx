@@ -69,7 +69,12 @@ export default function ManageCategoriesScreen({ route }: Props) {
                 <Text style={styles.cardIcon}>{item.icon}</Text>
                 <Text style={[styles.cardName, isDark && styles.textDark]}>{item.name}</Text>
             </View>
-            <TouchableOpacity onPress={() => handleDeleteCategory(item.id, item.name)} style={styles.deleteBtn}>
+            <TouchableOpacity
+                onPress={() => handleDeleteCategory(item.id, item.name)}
+                style={styles.deleteBtn}
+                accessibilityRole="button"
+                accessibilityLabel={`Delete category ${item.name}`}
+            >
                 <Trash2 color={isDark ? "#ef5350" : "#d32f2f"} size={18} />
             </TouchableOpacity>
         </View>
@@ -142,7 +147,12 @@ export default function ManageCategoriesScreen({ route }: Props) {
                         onChangeText={setNewCatName}
                         style={[styles.input, styles.nameInput, isDark && styles.inputDark]}
                     />
-                    <TouchableOpacity style={[styles.addBtn, isDark && styles.addBtnDark]} onPress={handleAddCategory}>
+                    <TouchableOpacity
+                        style={[styles.addBtn, isDark && styles.addBtnDark]}
+                        onPress={handleAddCategory}
+                        accessibilityRole="button"
+                        accessibilityLabel="Add category"
+                    >
                         <Plus color="#fff" size={20} />
                     </TouchableOpacity>
                 </View>

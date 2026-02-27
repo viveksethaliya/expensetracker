@@ -114,7 +114,11 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                                     {settings.currency}{tpl.amount.toFixed(0)} ({tpl.type})
                                 </Text>
                             </View>
-                            <TouchableOpacity onPress={() => handleDeleteTemplate(tpl.id, tpl.title)}>
+                            <TouchableOpacity
+                                onPress={() => handleDeleteTemplate(tpl.id, tpl.title)}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Delete template ${tpl.title}`}
+                            >
                                 <Trash2 color="#ef5350" size={20} />
                             </TouchableOpacity>
                         </View>

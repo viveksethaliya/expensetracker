@@ -70,7 +70,7 @@ export default function AddSubscriptionScreen({
 
     const filteredCategories = useMemo(() => categories.filter((c: Category) => c.type === type), [categories, type]);
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         const titleCheck = validateTitle(title);
         if (!titleCheck.valid) { Alert.alert('Validation', titleCheck.message); return; }
 
@@ -114,7 +114,7 @@ export default function AddSubscriptionScreen({
             startBillingDate = candidate;
         }
 
-        addSubscription({
+        await addSubscription({
             type,
             title: title.trim(),
             amount: parseFloat(amount),

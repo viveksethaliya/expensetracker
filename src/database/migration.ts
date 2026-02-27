@@ -20,7 +20,7 @@ export async function migrateFromAsyncStorage() {
         const hasMigrated = await getItem<boolean>(MIGRATED_KEY) || false;
         if (hasMigrated) return;
 
-        console.log('Migrating data from AsyncStorage to WatermelonDB...');
+        if (__DEV__) console.log('Migrating data from AsyncStorage to WatermelonDB...');
 
         // Fetch old data
         const oldTransactions = await getItem<LegacyTransaction[]>(STORAGE_KEYS.TRANSACTIONS) || [];
@@ -97,7 +97,7 @@ export async function migrateFromAsyncStorage() {
 
         // Mark as migrated
         await setItem(MIGRATED_KEY, true);
-        console.log('Migration to WatermelonDB complete.');
+        if (__DEV__) console.log('Migration to WatermelonDB complete.');
 
     } catch (e) {
         console.error('Migration failed:', e);

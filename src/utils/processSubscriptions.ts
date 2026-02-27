@@ -107,7 +107,7 @@ export async function processSubscriptions(): Promise<number> {
             }
         });
 
-        console.log(`[processSubscriptions] Created ${processedCount} transactions from due subscriptions.`);
+        if (__DEV__) console.log(`[processSubscriptions] Created ${processedCount} transactions from due subscriptions.`);
     } catch (error) {
         console.error('[processSubscriptions] Failed:', error);
     }

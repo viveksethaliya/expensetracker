@@ -93,7 +93,7 @@ export const startBackgroundService = async (): Promise<boolean> => {
     if (Platform.OS === 'android' && !BackgroundService.isRunning()) {
         try {
             await BackgroundService.start(async (taskDataArguments) => {
-                await new Promise(async (resolve) => {
+                await new Promise<void>(async (resolve) => {
                     // Process immediately on start, then every 15 minutes
                     while (BackgroundService.isRunning()) {
                         try {
@@ -103,6 +103,7 @@ export const startBackgroundService = async (): Promise<boolean> => {
                         }
                         await sleep(900000); // Check every 15 minutes
                     }
+                    resolve();
                 });
             }, {
                 taskName: 'ExpenseTrackerTask',

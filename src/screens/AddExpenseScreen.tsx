@@ -51,7 +51,7 @@ export default function AddExpenseScreen({
         navigation.goBack();
     };
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         const titleCheck = validateTitle(title);
         if (!titleCheck.valid) { Alert.alert('Validation', titleCheck.message); return; }
 
@@ -61,7 +61,7 @@ export default function AddExpenseScreen({
         const catCheck = validateCategory(selectedCategoryId);
         if (!catCheck.valid) { Alert.alert('Validation', catCheck.message); return; }
 
-        addTransaction({
+        await addTransaction({
             type: 'expense',
             title: title.trim(),
             amount: parseFloat(amount),
@@ -71,7 +71,7 @@ export default function AddExpenseScreen({
         });
 
         if (saveAsRecurring) {
-            addTemplate({
+            await addTemplate({
                 type: 'expense',
                 title: title.trim(),
                 amount: parseFloat(amount),

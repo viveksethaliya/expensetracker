@@ -47,7 +47,7 @@ export default function AddIncomeScreen({
         navigation.goBack();
     };
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         const sourceCheck = validateTitle(source);
         if (!sourceCheck.valid) { Alert.alert('Validation', sourceCheck.message); return; }
 
@@ -57,7 +57,7 @@ export default function AddIncomeScreen({
         const catCheck = validateCategory(selectedCategoryId);
         if (!catCheck.valid) { Alert.alert('Validation', catCheck.message); return; }
 
-        addTransaction({
+        await addTransaction({
             type: 'income',
             title: source.trim(),
             amount: parseFloat(amount),
@@ -67,7 +67,7 @@ export default function AddIncomeScreen({
         });
 
         if (saveAsRecurring) {
-            addTemplate({
+            await addTemplate({
                 type: 'income',
                 title: source.trim(),
                 amount: parseFloat(amount),

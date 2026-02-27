@@ -5,10 +5,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, PieChart, Settings, Repeat } from 'lucide-react-native';
 
-import { ExpenseProvider } from './src/context/ExpenseContext';
+import { ExpenseProvider, ExpenseContext } from './src/context/ExpenseContext';
 import HomeScreen from './src/screens/HomeScreen';
 import AddExpenseScreen from './src/screens/AddExpenseScreen';
 import AddIncomeScreen from './src/screens/AddIncomeScreen';
+import AddSubscriptionScreen from './src/screens/AddSubscriptionScreen';
+import EditTransactionScreen from './src/screens/EditTransactionScreen';
+import ManageCategoriesScreen from './src/screens/ManageCategoriesScreen';
 import SubscriptionsScreen from './src/screens/SubscriptionsScreen';
 import ReportsScreen from './src/screens/ReportsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
@@ -19,8 +22,6 @@ import { RootStackParamList, MainTabParamList } from './src/navigation/types';
 // ── Bottom Tab Navigator ──────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
 const Tab = createBottomTabNavigator<MainTabParamList>();
-
-import { ExpenseContext } from './src/context/ExpenseContext';
 
 function MainTabNavigator() {
   const { settings } = React.useContext(ExpenseContext);
@@ -42,7 +43,7 @@ function MainTabNavigator() {
         name="Home"
         component={HomeScreen}
         options={{
-          title: 'Expense Tracker',
+          title: 'Expense Friend',
           tabBarIcon: ({ color, size }) => (
             <Home color={color} size={size} />
           ),
@@ -78,10 +79,6 @@ function MainTabNavigator() {
     </Tab.Navigator>
   );
 }
-
-import ManageCategoriesScreen from './src/screens/ManageCategoriesScreen';
-import EditTransactionScreen from './src/screens/EditTransactionScreen';
-import AddSubscriptionScreen from './src/screens/AddSubscriptionScreen';
 
 // ═══════════════════════════════════════════════════════════════
 // ── Root Stack (Tabs + Modal Screens) ─────────────────────────

@@ -15,7 +15,9 @@ import { processSubscriptions } from '../utils/processSubscriptions';
 // ── Type definitions ──────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
 
-export type TransactionType = 'income' | 'expense';
+// Re-export shared types from model layer (single source of truth)
+export type { TransactionType } from '../database/models/Transaction';
+import type { TransactionType } from '../database/models/Transaction';
 
 export interface Transaction {
     id: string;
@@ -36,7 +38,9 @@ export interface TransactionTemplate {
     notes: string;
 }
 
-export type SubscriptionInterval = 'daily' | 'weekly' | 'monthly' | 'yearly';
+// Re-export shared type from model layer
+export type { SubscriptionInterval } from '../database/models/AutoSubscription';
+import type { SubscriptionInterval } from '../database/models/AutoSubscription';
 
 export interface AutoSubscription {
     id: string;
@@ -162,7 +166,7 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
         await setItem(STORAGE_KEYS.SETTINGS, newSettings);
 
         if (patch.dailyReminder !== undefined) {
-            try { scheduleDailyReminder(patch.dailyReminder); } catch (e) { }
+            try { scheduleDailyReminder(patch.dailyReminder); } catch (e) { console.warn('Failed to schedule reminder:', e); }
         }
     };
 
@@ -206,7 +210,7 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
             try {
                 const record = await database.collections.get<WatermelonTransaction>('transactions').find(id);
                 await record.markAsDeleted();
-            } catch (e) { }
+            } catch (e) { console.error('Failed to delete transaction', e); }
         });
     };
 

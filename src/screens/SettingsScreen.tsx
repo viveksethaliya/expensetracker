@@ -8,7 +8,7 @@ import { Tag, ChevronRight, Trash2, Bell } from 'lucide-react-native';
 import { ExpenseContext } from '../context/ExpenseContext';
 import TransactionTemplate from '../database/models/TransactionTemplate';
 import { RootStackParamList, MainTabParamList } from '../navigation/types';
-import { configureNotifications, scheduleDailyReminder, checkNotificationHealth } from '../utils/notifications';
+import { configureNotifications, scheduleDailyReminder, checkNotificationHealth, scheduleTestNotification } from '../utils/notifications';
 
 const CURRENCIES = ['₹', '$', '€', '£', '¥'];
 
@@ -138,7 +138,16 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                 />
             </View>
 
-
+            <TouchableOpacity
+                style={[styles.row, isDark && styles.rowDark, { marginTop: 10 }]}
+                onPress={scheduleTestNotification}
+            >
+                <View style={styles.rowLeft}>
+                    <Text style={[styles.rowLabel, isDark && styles.textDark, { color: '#6200ee', fontWeight: 'bold' }]}>
+                        Send Test Notification (10s)
+                    </Text>
+                </View>
+            </TouchableOpacity>
 
             {/* ── Theme ── */}
             <Text style={styles.sectionTitle}>Appearance</Text>

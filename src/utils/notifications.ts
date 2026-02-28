@@ -84,8 +84,6 @@ export const scheduleDailyReminder = async (enabled: boolean, hour: number = 20,
                 body: 'Did you spend anything today? Don\'t forget to log it!',
                 android: {
                     channelId,
-                    // Dedicated monochrome status-bar icon for Android notifications.
-                    smallIcon: 'ic_launcher',
                     pressAction: {
                         id: 'default',
                     },
@@ -97,6 +95,48 @@ export const scheduleDailyReminder = async (enabled: boolean, hour: number = 20,
         const message = error instanceof Error ? error.message : 'Unknown error';
         console.warn('Scheduling daily reminder failed:', error);
         Alert.alert('Notification Error', `Failed to schedule reminder: ${message}`);
+    }
+};
+
+export const scheduleTestNotification = async (): Promise<void> => {
+    try {
+        const hasPermission = await configureNotifications();
+        if (!hasPermission) return;
+
+        const channelId = await notifee.createChannel({
+            id: 'reminders',
+            name: 'Daily Reminders',
+            importance: AndroidImportance.HIGH,
+        });
+
+        const date = new Date(Date.now());
+        date.setSeconds(date.getSeconds() + 10);
+
+        const trigger: TimestampTrigger = {
+            type: TriggerType.TIMESTAMP,
+            timestamp: date.getTime(),
+            alarmManager: {
+                allowWhileIdle: true,
+            },
+        };
+
+        await notifee.createTriggerNotification(
+            {
+                id: 'test-notification',
+                title: 'Test Notification',
+                body: 'Notifications are working perfectly!',
+                android: {
+                    channelId,
+                    pressAction: { id: 'default' },
+                },
+            },
+            trigger,
+        );
+
+        Alert.alert('Test Scheduled', 'You will receive a notification in exactly 10 seconds. Make sure to minimize the app now to test it in the background!');
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'String error';
+        Alert.alert('Error', `Failed: ${message}`);
     }
 };
 

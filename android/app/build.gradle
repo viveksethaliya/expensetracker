@@ -155,3 +155,13 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// Force a clean Fresco 3.6.0 string to prevent 400 Bad Request on Maven Central
+// due to trailing carriage returns (\r) from improper react-native-svg parsing
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group == 'com.facebook.fresco') {
+            details.useVersion '3.6.0'
+        }
+    }
+}

@@ -16,6 +16,7 @@ import { RootStackParamList } from '../navigation/types';
 import { ExpenseContext, Category, TransactionType, SubscriptionInterval } from '../context/ExpenseContext';
 import { ChevronRight, Tag } from 'lucide-react-native';
 import { validateTitle, validateAmount, validateCategory } from '../utils/validation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const INTERVALS: { label: string; value: SubscriptionInterval }[] = [
     { label: 'Daily', value: 'daily' },
@@ -132,10 +133,11 @@ export default function AddSubscriptionScreen({
     };
 
     const isDark = settings.theme === 'dark';
+    const insets = useSafeAreaInsets();
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 }}>
+            <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 + Math.max(insets.bottom, 0) }}>
                 {/* ── Type Toggle ── */}
                 <View style={styles.toggleRow}>
                     <TouchableOpacity

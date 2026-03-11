@@ -17,6 +17,7 @@ import { RootStackParamList } from '../navigation/types';
 import { ChevronRight, Tag } from 'lucide-react-native';
 import { ExpenseContext, Category, TransactionTemplate } from '../context/ExpenseContext';
 import { validateTitle, validateAmount, validateCategory } from '../utils/validation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AddIncomeScreen({
     navigation,
@@ -82,10 +83,11 @@ export default function AddIncomeScreen({
     };
 
     const isDark = settings.theme === 'dark';
+    const insets = useSafeAreaInsets();
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 }}>
+            <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 + Math.max(insets.bottom, 0) }}>
                 {/* ── Header banner ── */}
                 <View style={[styles.banner, isDark && styles.bannerDark]}>
                     <Text style={styles.bannerIcon}>💰</Text>

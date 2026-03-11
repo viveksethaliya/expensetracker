@@ -20,6 +20,7 @@ import {
     validateAmount,
     validateCategory,
 } from '../utils/validation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditTransaction'>;
 
@@ -76,10 +77,11 @@ export default function EditTransactionScreen({ route, navigation }: Props) {
     };
 
     const isDark = settings.theme === 'dark';
+    const insets = useSafeAreaInsets();
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 }}>
+            <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 + Math.max(insets.bottom, 0) }}>
                 {/* ── Header banner ── */}
                 <View style={[
                     styles.banner,

@@ -13,6 +13,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Trash2, Plus } from 'lucide-react-native';
 import { ExpenseContext, Category } from '../context/ExpenseContext';
 import { RootStackParamList } from '../navigation/types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ManageCategories'>;
 
@@ -20,6 +21,7 @@ export default function ManageCategoriesScreen({ route }: Props) {
     const { addCategory, deleteCategory, settings } = useContext(ExpenseContext);
     const categories = useCategories();
     const isDark = settings.theme === 'dark';
+    const insets = useSafeAreaInsets();
 
     const [activeTab, setActiveTab] = useState<'expense' | 'income'>(route.params?.defaultTab ?? 'expense');
     const [newCatName, setNewCatName] = useState('');
@@ -132,7 +134,7 @@ export default function ManageCategoriesScreen({ route }: Props) {
             />
 
             {/* ── Add Category Floating Footer ── */}
-            <View style={[styles.addFooter, isDark && styles.addFooterDark]}>
+            <View style={[styles.addFooter, isDark && styles.addFooterDark, { paddingBottom: 16 + Math.max(insets.bottom, 0) }]}>
                 <Text style={[styles.addTitle, isDark && styles.textDark]}>Add New {activeTab === 'expense' ? 'Expense' : 'Income'} Category</Text>
                 <View style={styles.inputRow}>
                     <TextInput
@@ -218,6 +220,7 @@ const styles = StyleSheet.create({
         right: 0,
         backgroundColor: '#fff',
         padding: 16,
+        paddingBottom: 0, // Handled dynamically inline via insets
         borderTopWidth: 1,
         borderTopColor: '#f0f0f0',
         elevation: 10,

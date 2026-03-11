@@ -4,11 +4,10 @@ import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert, Pl
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Tag, ChevronRight, Trash2, Bell } from 'lucide-react-native';
+import { Tag, ChevronRight, Trash2 } from 'lucide-react-native';
 import { ExpenseContext } from '../context/ExpenseContext';
 import TransactionTemplate from '../database/models/TransactionTemplate';
 import { RootStackParamList, MainTabParamList } from '../navigation/types';
-import { configureNotifications, scheduleDailyReminder, checkNotificationHealth, scheduleTestNotification } from '../utils/notifications';
 
 const CURRENCIES = ['₹', '$', '€', '£', '¥'];
 
@@ -23,19 +22,6 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
 
     const isDark = settings.theme === 'dark';
 
-    const [isNotifHealthy, setIsNotifHealthy] = useState<boolean>(false);
-
-    useEffect(() => {
-        let isMounted = true;
-        const checkHealth = async () => {
-            const healthy = await checkNotificationHealth();
-            if (!isMounted) return;
-            setIsNotifHealthy(healthy);
-        };
-        checkHealth();
-        return () => { isMounted = false; };
-    }, []);
-
     const handleDeleteTemplate = (id: string, name: string) => {
         Alert.alert(
             'Delete Template',
@@ -45,14 +31,6 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                 { text: 'Delete', style: 'destructive', onPress: () => deleteTemplate(id) },
             ]
         );
-    };
-
-    const toggleDailyReminder = async (val: boolean) => {
-        if (val) {
-            await configureNotifications();
-        }
-        await scheduleDailyReminder(val, 20, 0); // 8:00 PM
-        updateSettings({ dailyReminder: val });
     };
 
     return (
@@ -120,34 +98,6 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                     ))}
                 </>
             )}
-
-            <Text style={styles.sectionTitle}>Notifications</Text>
-            <View style={[styles.row, isDark && styles.rowDark]}>
-                <View style={styles.rowLeft}>
-                    <Bell color={isDark ? '#efefef' : '#333'} size={20} style={{ marginRight: 12 }} />
-                    <View>
-                        <Text style={[styles.rowLabel, isDark && styles.textDark]}>Daily Reminder</Text>
-                        <Text style={styles.subText}>Get reminded to log expenses at 8:00 PM</Text>
-                    </View>
-                </View>
-                <Switch
-                    value={settings.dailyReminder || false}
-                    onValueChange={toggleDailyReminder}
-                    trackColor={{ false: '#ccc', true: '#6200ee' }}
-                    thumbColor={(settings.dailyReminder || false) ? (isDark ? '#fff' : '#f4f3f4') : '#f4f3f4'}
-                />
-            </View>
-
-            <TouchableOpacity
-                style={[styles.row, isDark && styles.rowDark, { marginTop: 10 }]}
-                onPress={scheduleTestNotification}
-            >
-                <View style={styles.rowLeft}>
-                    <Text style={[styles.rowLabel, isDark && styles.textDark, { color: '#6200ee', fontWeight: 'bold' }]}>
-                        Send Test Notification (10s)
-                    </Text>
-                </View>
-            </TouchableOpacity>
 
             {/* ── Theme ── */}
             <Text style={styles.sectionTitle}>Appearance</Text>

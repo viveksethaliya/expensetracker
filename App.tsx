@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, PieChart, Settings, Repeat } from 'lucide-react-native';
 
 import { ExpenseProvider, ExpenseContext } from './src/context/ExpenseContext';
@@ -27,6 +27,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 function MainTabNavigator() {
   const { settings } = React.useContext(ExpenseContext);
   const isDark = settings.theme === 'dark';
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -36,7 +37,11 @@ function MainTabNavigator() {
         headerTintColor: '#fff',
         tabBarActiveTintColor: isDark ? '#bb86fc' : '#6200ee',
         tabBarInactiveTintColor: '#999',
-        tabBarStyle: [styles.tabBar, isDark && { backgroundColor: '#1e1e1e', borderTopColor: '#333' }],
+        tabBarStyle: [
+          styles.tabBar,
+          isDark && { backgroundColor: '#1e1e1e', borderTopColor: '#333' },
+          { height: 60 + insets.bottom, paddingBottom: 6 + insets.bottom }
+        ],
         tabBarLabelStyle: styles.tabLabel,
       }}
     >
@@ -146,8 +151,6 @@ export default function App() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 60,
-    paddingBottom: 6,
     paddingTop: 6,
     backgroundColor: '#fff',
     borderTopWidth: 1,

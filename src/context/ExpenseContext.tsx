@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect, useMemo } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
-import { scheduleDailyReminder } from '../utils/notifications';
 import { database } from '../database';
 import { Q } from '@nozbe/watermelondb';
 import WatermelonTransaction from '../database/models/Transaction';
@@ -67,7 +66,6 @@ export type ThemeMode = 'light' | 'dark';
 export interface AppSettings {
     currency: string;
     theme: ThemeMode;
-    dailyReminder: boolean;
 }
 
 export const DEFAULT_CATEGORIES: Category[] = [
@@ -88,7 +86,6 @@ export const DEFAULT_CATEGORIES: Category[] = [
 export const DEFAULT_SETTINGS: AppSettings = {
     currency: '₹',
     theme: 'light',
-    dailyReminder: false,
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -164,10 +161,6 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
         const newSettings = { ...settings, ...patch };
         setSettings(newSettings);
         await setItem(STORAGE_KEYS.SETTINGS, newSettings);
-
-        if (patch.dailyReminder !== undefined) {
-            try { scheduleDailyReminder(patch.dailyReminder); } catch (e) { console.warn('Failed to schedule reminder:', e); }
-        }
     };
 
     const addTransaction = async (txn: Omit<Transaction, 'id'>) => {

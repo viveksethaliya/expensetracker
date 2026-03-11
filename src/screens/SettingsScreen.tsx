@@ -4,10 +4,11 @@ import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert, Pl
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Tag, ChevronRight, Trash2 } from 'lucide-react-native';
+import { Tag, ChevronRight, Trash2, Upload, Download } from 'lucide-react-native';
 import { ExpenseContext } from '../context/ExpenseContext';
 import TransactionTemplate from '../database/models/TransactionTemplate';
 import { RootStackParamList, MainTabParamList } from '../navigation/types';
+import { exportBackup, pickAndReadBackupFile } from '../utils/backup';
 
 const CURRENCIES = ['₹', '$', '€', '£', '¥'];
 
@@ -17,10 +18,39 @@ type SettingsScreenNavigationProp = CompositeNavigationProp<
 >;
 
 export default function SettingsScreen({ navigation }: { navigation: SettingsScreenNavigationProp }) {
-    const { settings, updateSettings, deleteTemplate } = useContext(ExpenseContext);
+    const { settings, updateSettings, deleteTemplate, importData } = useContext(ExpenseContext);
     const templates = useTemplates();
 
     const isDark = settings.theme === 'dark';
+
+    const handleExport = async () => {
+        await exportBackup();
+    };
+
+    const handleImport = async () => {
+        const backupData = await pickAndReadBackupFile();
+        if (backupData) {
+            Alert.alert(
+                'Restore Backup',
+                'Are you sure you want to restore this backup? This will delete your current data.',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Restore',
+                        style: 'destructive',
+                        onPress: async () => {
+                            const success = await importData(backupData);
+                            if (success) {
+                                Alert.alert('Success', 'Backup restored successfully!');
+                            } else {
+                                Alert.alert('Error', 'Failed to restore backup.');
+                            }
+                        }
+                    }
+                ]
+            );
+        }
+    };
 
     const handleDeleteTemplate = (id: string, name: string) => {
         Alert.alert(
@@ -98,6 +128,28 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                     ))}
                 </>
             )}
+
+            {/* ── Data & Backup ── */}
+            <Text style={styles.sectionTitle}>Data & Backup</Text>
+            <TouchableOpacity style={[styles.row, isDark && styles.rowDark]} onPress={handleExport}>
+                <View style={styles.rowLeft}>
+                    <Upload color={isDark ? '#efefef' : '#333'} size={20} style={{ marginRight: 12 }} />
+                    <View>
+                        <Text style={[styles.rowLabel, isDark && styles.textDark]}>Export Backup</Text>
+                        <Text style={styles.subText}>Save your data to a file</Text>
+                    </View>
+                </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.row, isDark && styles.rowDark, { marginTop: 10 }]} onPress={handleImport}>
+                <View style={styles.rowLeft}>
+                    <Download color={isDark ? '#efefef' : '#333'} size={20} style={{ marginRight: 12 }} />
+                    <View>
+                        <Text style={[styles.rowLabel, isDark && styles.textDark]}>Import Backup</Text>
+                        <Text style={styles.subText}>Restore data from a file</Text>
+                    </View>
+                </View>
+            </TouchableOpacity>
 
             {/* ── Theme ── */}
             <Text style={styles.sectionTitle}>Appearance</Text>

@@ -9,6 +9,7 @@ import WatermelonTransactionTemplate from '../database/models/TransactionTemplat
 import WatermelonAutoSubscription from '../database/models/AutoSubscription';
 import { migrateFromAsyncStorage } from '../database/migration';
 import { processSubscriptions } from '../utils/processSubscriptions';
+import { AppBackupData } from '../utils/backup';
 
 // ═══════════════════════════════════════════════════════════════
 // ── Type definitions ──────────────────────────────────────────
@@ -108,6 +109,9 @@ export interface ExpenseContextType {
     addSubscription: (sub: Omit<AutoSubscription, 'id'>) => Promise<void>;
     deleteSubscription: (id: string) => Promise<void>;
 
+    // ── Backup ──
+    importData: (data: AppBackupData) => Promise<boolean>;
+
     // ── Settings ──
     settings: AppSettings;
     updateSettings: (patch: Partial<AppSettings>) => void;
@@ -129,6 +133,7 @@ export const ExpenseContext = createContext<ExpenseContextType>({
     deleteTemplate: noop,
     addSubscription: noop,
     deleteSubscription: noop,
+    importData: async () => false,
     settings: DEFAULT_SETTINGS,
     updateSettings: () => { },
     isLoading: true,
@@ -353,6 +358,73 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
         });
     };
 
+    const importData = async (data: AppBackupData): Promise<boolean> => {
+        try {
+            await database.write(async () => {
+                const transactionsCollection = database.collections.get<WatermelonTransaction>('transactions');
+                const categoriesCollection = database.collections.get<WatermelonCategory>('categories');
+                const templatesCollection = database.collections.get<WatermelonTransactionTemplate>('templates');
+                const subscriptionsCollection = database.collections.get<WatermelonAutoSubscription>('subscriptions');
+
+                // Clear all existing data to prevent duplicates on import
+                const allTxns = await transactionsCollection.query().fetch();
+                const allCats = await categoriesCollection.query().fetch();
+                const allTpls = await templatesCollection.query().fetch();
+                const allSubs = await subscriptionsCollection.query().fetch();
+
+                const deleteOps = [...allTxns, ...allCats, ...allTpls, ...allSubs].map(r => r.prepareDestroyPermanently());
+
+                // Prepare new inserts
+                const insertCats = data.categories.map(c => categoriesCollection.prepareCreate(r => {
+                    r.name = c.name;
+                    r.type = c.type;
+                    r.icon = c.icon;
+                }));
+
+                const insertTxns = data.transactions.map(t => transactionsCollection.prepareCreate(r => {
+                    r.type = t.type;
+                    r.title = t.title;
+                    r.amount = t.amount;
+                    r.categoryId = t.categoryId;
+                    r.date = t.date;
+                    r.notes = t.notes;
+                }));
+
+                const insertTpls = data.templates.map(tpl => templatesCollection.prepareCreate(r => {
+                    r.type = tpl.type;
+                    r.title = tpl.title;
+                    r.amount = tpl.amount;
+                    r.categoryId = tpl.categoryId;
+                    r.notes = tpl.notes;
+                }));
+
+                const insertSubs = data.subscriptions.map(sub => subscriptionsCollection.prepareCreate(r => {
+                    r.type = sub.type;
+                    r.title = sub.title;
+                    r.amount = sub.amount;
+                    r.categoryId = sub.categoryId;
+                    r.interval = sub.interval;
+                    r.nextBillingDate = sub.nextBillingDate;
+                    r.notes = sub.notes;
+                    r.anchorDay = sub.anchorDay ?? null;
+                    r.anchorMonth = sub.anchorMonth ?? null;
+                }));
+
+                // Batch everything
+                await database.batch(...deleteOps, ...insertCats, ...insertTxns, ...insertTpls, ...insertSubs);
+            });
+
+            if (data.settings) {
+                await updateSettings(data.settings);
+            }
+
+            return true;
+        } catch (e) {
+            console.error('Failed to import backup data', e);
+            return false;
+        }
+    };
+
     const contextValue = useMemo(() => ({
         addTransaction,
         updateTransaction,
@@ -364,6 +436,7 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
         deleteTemplate,
         addSubscription,
         deleteSubscription,
+        importData,
         settings,
         updateSettings,
         isLoading,
@@ -378,6 +451,7 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
         deleteTemplate,
         addSubscription,
         deleteSubscription,
+        importData,
         settings,
         updateSettings,
         isLoading

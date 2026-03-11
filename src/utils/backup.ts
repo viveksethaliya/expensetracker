@@ -1,5 +1,5 @@
 import { Alert } from 'react-native';
-import DocumentPicker from 'react-native-document-picker';
+import * as DocumentPicker from '@react-native-documents/picker';
 import RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import { database } from '../database';
@@ -96,18 +96,20 @@ export const exportBackup = async () => {
 export const pickAndReadBackupFile = async (): Promise<AppBackupData | null> => {
     try {
         // 1. Pick the file
-        const result = await DocumentPicker.pickSingle({
+        const result = await DocumentPicker.pick({
             type: [DocumentPicker.types.json, DocumentPicker.types.allFiles],
+            mode: 'open',
         });
+        const file = result[0];
 
         // 2. Read the file
         let fileContent = '';
-        if (result.uri.startsWith('content://')) {
+        if (file.uri.startsWith('content://')) {
             // Android content URI reading
-            fileContent = await RNFS.readFile(result.uri, 'utf8');
+            fileContent = await RNFS.readFile(file.uri, 'utf8');
         } else {
             // iOS or raw path
-            const cleanUri = result.uri.replace('file://', '');
+            const cleanUri = file.uri.replace('file://', '');
             fileContent = await RNFS.readFile(cleanUri, 'utf8');
         }
 
@@ -120,7 +122,7 @@ export const pickAndReadBackupFile = async (): Promise<AppBackupData | null> => 
         return parsedData as AppBackupData;
 
     } catch (error) {
-        if (DocumentPicker.isCancel(error)) {
+        if (DocumentPicker.isErrorWithCode(error) && error.code === DocumentPicker.errorCodes.OPERATION_CANCELED) {
             // User cancelled, not an error
             return null;
         }

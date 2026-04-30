@@ -10,6 +10,7 @@ import { ExpenseProvider, ExpenseContext } from './src/context/ExpenseContext';
 import HomeScreen from './src/screens/HomeScreen';
 import AddExpenseScreen from './src/screens/AddExpenseScreen';
 import AddIncomeScreen from './src/screens/AddIncomeScreen';
+import AddQuickScreen from './src/screens/AddQuickScreen';
 import AddSubscriptionScreen from './src/screens/AddSubscriptionScreen';
 import EditTransactionScreen from './src/screens/EditTransactionScreen';
 import ManageCategoriesScreen from './src/screens/ManageCategoriesScreen';
@@ -118,6 +119,11 @@ function RootNavigator() {
           name="AddIncome"
           component={AddIncomeScreen}
           options={{ title: 'Add Income' }}
+        />
+        <RootStack.Screen
+          name="AddQuick"
+          component={AddQuickScreen}
+          options={{ title: 'Quick Add' }}
         />
         <RootStack.Screen
           name="EditTransaction"

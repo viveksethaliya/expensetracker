@@ -5,6 +5,7 @@ export type RootStackParamList = {
     MainTabs: undefined;
     AddExpense: undefined;
     AddIncome: undefined;
+    AddQuick: undefined;
     AddSubscription: undefined;
     EditTransaction: { transaction: Transaction };
     ManageCategories: { defaultTab?: 'expense' | 'income' } | undefined;

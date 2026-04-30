@@ -374,18 +374,63 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
 
                 const deleteOps = [...allTxns, ...allCats, ...allTpls, ...allSubs].map(r => r.prepareDestroyPermanently());
 
-                // Prepare new inserts
-                const insertCats = data.categories.map(c => categoriesCollection.prepareCreate(r => {
-                    r.name = c.name;
-                    r.type = c.type;
-                    r.icon = c.icon;
-                }));
+                // Prepare new category inserts and build old→new ID mapping
+                const categoryIdMap: Record<string, string> = {};
+                const insertCats = data.categories.map((c, index) => {
+                    const record = categoriesCollection.prepareCreate(r => {
+                        r.name = c.name;
+                        r.type = c.type;
+                        r.icon = c.icon;
+                    });
+                    return record;
+                });
+
+                // We need to batch categories first to get their IDs, then map
+                // Since prepareCreate generates the ID immediately, we can read it
+                // Build mapping: use name+type as the lookup key from backup data
+                const catLookup: Record<string, string> = {};
+                insertCats.forEach((record, index) => {
+                    const original = data.categories[index];
+                    // Map by name+type for reliable matching
+                    catLookup[`${original.name}__${original.type}`] = record.id;
+                });
+
+                // Also build a direct oldId → newId map using the default category IDs
+                // This handles backup files that use well-known IDs like cat_salary
+                const defaultCatNames: Record<string, { name: string; type: string }> = {
+                    'cat_food': { name: 'Food', type: 'expense' },
+                    'cat_transport': { name: 'Transport', type: 'expense' },
+                    'cat_shopping': { name: 'Shopping', type: 'expense' },
+                    'cat_bills': { name: 'Bills', type: 'expense' },
+                    'cat_entertainment': { name: 'Entertainment', type: 'expense' },
+                    'cat_health': { name: 'Health', type: 'expense' },
+                    'cat_education': { name: 'Education', type: 'expense' },
+                    'cat_other_exp': { name: 'Other', type: 'expense' },
+                    'cat_salary': { name: 'Salary', type: 'income' },
+                    'cat_freelance': { name: 'Freelance', type: 'income' },
+                    'cat_investment': { name: 'Investment', type: 'income' },
+                    'cat_other_inc': { name: 'Other', type: 'income' },
+                };
+
+                // For each old categoryId used in the backup, find the new ID
+                const resolveCategory = (oldId: string): string => {
+                    // Check if there's a direct match via default mapping
+                    const defaultInfo = defaultCatNames[oldId];
+                    if (defaultInfo) {
+                        const newId = catLookup[`${defaultInfo.name}__${defaultInfo.type}`];
+                        if (newId) return newId;
+                    }
+                    // Check if the oldId itself exists as a name+type key
+                    if (catLookup[oldId]) return catLookup[oldId];
+                    // Fallback: return the first category ID or the oldId itself
+                    return insertCats.length > 0 ? insertCats[0].id : oldId;
+                };
 
                 const insertTxns = data.transactions.map(t => transactionsCollection.prepareCreate(r => {
                     r.type = t.type;
                     r.title = t.title;
                     r.amount = t.amount;
-                    r.categoryId = t.categoryId;
+                    r.categoryId = resolveCategory(t.categoryId);
                     r.date = t.date;
                     r.notes = t.notes;
                 }));
@@ -394,7 +439,7 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
                     r.type = tpl.type;
                     r.title = tpl.title;
                     r.amount = tpl.amount;
-                    r.categoryId = tpl.categoryId;
+                    r.categoryId = resolveCategory(tpl.categoryId);
                     r.notes = tpl.notes;
                 }));
 
@@ -402,7 +447,7 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
                     r.type = sub.type;
                     r.title = sub.title;
                     r.amount = sub.amount;
-                    r.categoryId = sub.categoryId;
+                    r.categoryId = resolveCategory(sub.categoryId);
                     r.interval = sub.interval;
                     r.nextBillingDate = sub.nextBillingDate;
                     r.notes = sub.notes;

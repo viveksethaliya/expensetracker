@@ -34,6 +34,12 @@ jobs:
           distribution: 'zulu'
           cache: 'gradle'
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install required NDK
+        run: sdkmanager --install "ndk;27.1.12297006"
+
       - name: Grant execute permission for gradlew
         working-directory: android
         run: chmod +x gradlew

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo } from 'react';
+import React, { useState, useContext, useMemo, useCallback, useLayoutEffect, useRef } from 'react';
 import { useCategories, useTemplates } from '../hooks/useData';
 import {
     View,
@@ -11,13 +11,14 @@ import {
     Switch,
     KeyboardAvoidingView,
     Platform,
+    Keyboard,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { ChevronRight, Tag } from 'lucide-react-native';
 import { ExpenseContext, Category, TransactionTemplate } from '../context/ExpenseContext';
 import { validateTitle, validateAmount, validateCategory } from '../utils/validation';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Toast from '../components/Toast';
 
 export default function AddIncomeScreen({
     navigation,
@@ -33,12 +34,33 @@ export default function AddIncomeScreen({
     const [description, setDescription] = useState('');
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
     const [saveAsRecurring, setSaveAsRecurring] = useState(false);
+    const [toastVisible, setToastVisible] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+
+    const sourceRef = useRef<TextInput>(null);
 
     const incomeCategories = useMemo(() => categories.filter((c: Category) => c.type === 'income'), [categories]);
     const incomeTemplates = useMemo(() => templates.filter((t: TransactionTemplate) => t.type === 'income'), [templates]);
 
-    const handleQuickAdd = (tpl: TransactionTemplate) => {
-        addTransaction({
+    const hasUnsavedContent = source.trim() !== '' || amount.trim() !== '' || description.trim() !== '' || selectedCategoryId !== '';
+
+    const showToast = (msg: string) => {
+        setToastMessage(msg);
+        setToastVisible(true);
+    };
+
+    const resetForm = () => {
+        setSource('');
+        setAmount('');
+        setDescription('');
+        setSelectedCategoryId('');
+        setSaveAsRecurring(false);
+        setTimeout(() => sourceRef.current?.focus(), 100);
+    };
+
+    const handleQuickAdd = async (tpl: TransactionTemplate) => {
+        Keyboard.dismiss();
+        await addTransaction({
             type: 'income',
             title: tpl.title,
             amount: tpl.amount,
@@ -46,19 +68,23 @@ export default function AddIncomeScreen({
             date: new Date().toISOString(),
             notes: tpl.notes,
         });
-        Alert.alert('Success', `Logged recurring income: ${tpl.title}`);
-        navigation.goBack();
+        showToast(`✓ ${tpl.title} logged`);
     };
 
-    const handleAdd = async () => {
+    const handleCategorySelect = (catId: string) => {
+        Keyboard.dismiss();
+        setSelectedCategoryId(catId);
+    };
+
+    const handleAdd = useCallback(async () => {
         const sourceCheck = validateTitle(source);
-        if (!sourceCheck.valid) { Alert.alert('Validation', sourceCheck.message); return; }
+        if (!sourceCheck.valid) { showToast(sourceCheck.message ?? 'Enter a source'); return; }
 
         const amountCheck = validateAmount(amount);
-        if (!amountCheck.valid) { Alert.alert('Validation', amountCheck.message); return; }
+        if (!amountCheck.valid) { showToast(amountCheck.message ?? 'Enter an amount'); return; }
 
         const catCheck = validateCategory(selectedCategoryId);
-        if (!catCheck.valid) { Alert.alert('Validation', catCheck.message); return; }
+        if (!catCheck.valid) { showToast(catCheck.message ?? 'Pick a category'); return; }
 
         await addTransaction({
             type: 'income',
@@ -79,27 +105,54 @@ export default function AddIncomeScreen({
             });
         }
 
-        navigation.goBack();
-    };
+        showToast('✓ Income saved');
+        resetForm();
+    }, [source, amount, selectedCategoryId, description, saveAsRecurring, addTransaction, addTemplate]);
+
+    const handleBack = useCallback(() => {
+        if (hasUnsavedContent) {
+            Alert.alert(
+                'Discard changes?',
+                'You have unsaved content. Are you sure you want to go back?',
+                [
+                    { text: 'Stay', style: 'cancel' },
+                    { text: 'Discard', style: 'destructive', onPress: () => navigation.goBack() },
+                ]
+            );
+        } else {
+            navigation.goBack();
+        }
+    }, [hasUnsavedContent, navigation]);
 
     const isDark = settings.theme === 'dark';
-    const insets = useSafeAreaInsets();
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerLeft: () => (
+                <TouchableOpacity onPress={handleBack} style={{ paddingHorizontal: 10 }}>
+                    <Text style={{ color: '#ffffff', fontSize: 16 }}>✕</Text>
+                </TouchableOpacity>
+            ),
+            headerRight: () => (
+                <TouchableOpacity onPress={handleAdd} style={{ paddingHorizontal: 10 }}>
+                    <Text style={{ color: isDark ? '#81c784' : '#ffffff', fontSize: 16, fontWeight: '700' }}>Save</Text>
+                </TouchableOpacity>
+            ),
+        });
+    }, [navigation, handleAdd, handleBack, isDark]);
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 + Math.max(insets.bottom, 0) }}>
-                {/* ── Header banner ── */}
-                <View style={[styles.banner, isDark && styles.bannerDark]}>
-                    <Text style={styles.bannerIcon}>💰</Text>
-                    <Text style={[styles.bannerTitle, isDark && styles.bannerTitleDark]}>Record Income</Text>
-                    <Text style={[styles.bannerSub, isDark && styles.bannerSubDark]}>Track your earnings & revenue</Text>
-                </View>
-
+            <ScrollView
+                style={[styles.container, isDark && styles.containerDark]}
+                contentContainerStyle={{ paddingBottom: 100 }}
+                keyboardShouldPersistTaps="handled"
+            >
                 {/* ── Quick Add Recurring ── */}
                 {incomeTemplates.length > 0 && (
                     <View style={styles.recurringSection}>
                         <Text style={[styles.label, isDark && styles.labelDark]}>Quick Add Recurring</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recurringScroll}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recurringScroll} keyboardShouldPersistTaps="handled">
                             {incomeTemplates.map((tpl: TransactionTemplate) => (
                                 <TouchableOpacity
                                     key={tpl.id}
@@ -119,6 +172,8 @@ export default function AddIncomeScreen({
                 {/* ── Source ── */}
                 <Text style={[styles.label, isDark && styles.labelDark]}>Income Source</Text>
                 <TextInput
+                    ref={sourceRef}
+                    autoFocus={true}
                     placeholder="e.g. Monthly Salary, Freelance Project"
                     placeholderTextColor={isDark ? '#555' : '#999'}
                     value={source}
@@ -139,16 +194,7 @@ export default function AddIncomeScreen({
 
                 {/* ── Category picker ── */}
                 <Text style={[styles.label, isDark && styles.labelDark]}>Income Type</Text>
-                <TouchableOpacity
-                    style={[styles.row, isDark && styles.rowDark]}
-                    onPress={() => navigation.navigate('ManageCategories', { defaultTab: 'income' })}
-                >
-                    <View style={styles.rowLeft}>
-                        <Tag color={isDark ? '#efefef' : '#333'} size={20} style={{ marginRight: 12 }} />
-                        <Text style={[styles.rowLabel, isDark && styles.textDark]}>Manage Categories</Text>
-                    </View>
-                    <ChevronRight color="#888" size={20} />
-                </TouchableOpacity>
+
                 <View style={styles.categoryGrid}>
                     {incomeCategories.map((cat: Category) => {
                         const isActive = selectedCategoryId === cat.id;
@@ -156,7 +202,7 @@ export default function AddIncomeScreen({
                         return (
                             <TouchableOpacity
                                 key={cat.id}
-                                onPress={() => setSelectedCategoryId(cat.id)}
+                                onPress={() => handleCategorySelect(cat.id)}
                                 style={[
                                     styles.categoryChip,
                                     isDark && styles.categoryChipDark,
@@ -177,17 +223,16 @@ export default function AddIncomeScreen({
                         );
                     })}
                 </View>
-
-                {/* ── Description ── */}
-                <Text style={[styles.label, isDark && styles.labelDark]}>Description (optional)</Text>
-                <TextInput
-                    placeholder="e.g. February salary, client payment..."
-                    placeholderTextColor={isDark ? '#555' : '#999'}
-                    value={description}
-                    onChangeText={setDescription}
-                    multiline
-                    style={[styles.input, isDark && styles.inputDark, { height: 80, textAlignVertical: 'top' }]}
-                />
+                <TouchableOpacity
+                    style={[styles.row, isDark && styles.rowDark]}
+                    onPress={() => navigation.navigate('ManageCategories', { defaultTab: 'income' })}
+                >
+                    <View style={styles.rowLeft}>
+                        <Tag color={isDark ? '#efefef' : '#333'} size={20} style={{ marginRight: 12 }} />
+                        <Text style={[styles.rowLabel, isDark && styles.textDark]}>Manage Categories</Text>
+                    </View>
+                    <ChevronRight color="#888" size={20} />
+                </TouchableOpacity>
 
                 {/* ── Save as Recurring ── */}
                 <View style={[styles.toggleRow, isDark && styles.toggleRowDark]}>
@@ -203,11 +248,19 @@ export default function AddIncomeScreen({
                     />
                 </View>
 
-                {/* ── Submit ── */}
-                <TouchableOpacity style={[styles.submitBtn, isDark && styles.submitBtnDark]} onPress={handleAdd}>
-                    <Text style={styles.submitText}>Add Income</Text>
-                </TouchableOpacity>
+                {/* ── Description ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Description (optional)</Text>
+                <TextInput
+                    placeholder="e.g. February salary, client payment..."
+                    placeholderTextColor={isDark ? '#555' : '#999'}
+                    value={description}
+                    onChangeText={setDescription}
+                    multiline
+                    style={[styles.input, isDark && styles.inputDark, { height: 80, textAlignVertical: 'top' }]}
+                />
+
             </ScrollView>
+            <Toast message={toastMessage} visible={toastVisible} onHide={() => setToastVisible(false)} />
         </KeyboardAvoidingView>
     );
 }
@@ -219,7 +272,6 @@ export default function AddIncomeScreen({
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fff', padding: 20 },
     containerDark: { backgroundColor: '#121212' },
-    // custom
     row: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -233,20 +285,6 @@ const styles = StyleSheet.create({
     rowLeft: { flexDirection: 'row', alignItems: 'center' },
     rowLabel: { fontSize: 16, color: '#333' },
     textDark: { color: '#efefef' },
-    // ── Banner ──
-    banner: {
-        backgroundColor: '#e8f5e9',
-        borderRadius: 14,
-        padding: 20,
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    bannerDark: { backgroundColor: '#0f2913' }, // Extra dark green
-    bannerIcon: { fontSize: 36, marginBottom: 6 },
-    bannerTitle: { fontSize: 20, fontWeight: '700', color: '#2e7d32' },
-    bannerTitleDark: { color: '#81c784' },
-    bannerSub: { fontSize: 13, color: '#66bb6a', marginTop: 4 },
-    bannerSubDark: { color: '#a5d6a7' },
 
     // ── Quick Add Recurring ──
     recurringSection: { marginBottom: 16 },
@@ -339,15 +377,4 @@ const styles = StyleSheet.create({
     toggleLabel: { fontSize: 16, fontWeight: '600', color: '#333' },
     toggleSub: { fontSize: 12, color: '#888', marginTop: 2 },
     subTextDark: { color: '#aaa' },
-
-    // ── Submit ──
-    submitBtn: {
-        backgroundColor: '#2e7d32',
-        borderRadius: 12,
-        paddingVertical: 16,
-        alignItems: 'center',
-        elevation: 3,
-    },
-    submitBtnDark: { backgroundColor: '#1b5e20' },
-    submitText: { color: '#fff', fontSize: 18, fontWeight: '700' },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo } from 'react';
+import React, { useState, useContext, useMemo, useCallback, useLayoutEffect, useRef } from 'react';
 import { useCategories, useTemplates } from '../hooks/useData';
 import {
     View,
@@ -11,6 +11,7 @@ import {
     Switch,
     KeyboardAvoidingView,
     Platform,
+    Keyboard,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -21,7 +22,7 @@ import {
     validateCategory,
 } from '../utils/validation';
 import { ChevronRight, Tag } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Toast from '../components/Toast';
 
 export default function AddExpenseScreen({
     navigation,
@@ -37,12 +38,35 @@ export default function AddExpenseScreen({
     const [notes, setNotes] = useState('');
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
     const [saveAsRecurring, setSaveAsRecurring] = useState(false);
+    const [toastVisible, setToastVisible] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+
+    const titleRef = useRef<TextInput>(null);
 
     const expenseCategories = useMemo(() => categories.filter((c: Category) => c.type === 'expense'), [categories]);
     const expenseTemplates = useMemo(() => templates.filter((t: TransactionTemplate) => t.type === 'expense'), [templates]);
 
-    const handleQuickAdd = (tpl: TransactionTemplate) => {
-        addTransaction({
+    // Check if the form has any user-entered content
+    const hasUnsavedContent = title.trim() !== '' || amount.trim() !== '' || notes.trim() !== '' || selectedCategoryId !== '';
+
+    const showToast = (msg: string) => {
+        setToastMessage(msg);
+        setToastVisible(true);
+    };
+
+    const resetForm = () => {
+        setTitle('');
+        setAmount('');
+        setNotes('');
+        setSelectedCategoryId('');
+        setSaveAsRecurring(false);
+        // Re-focus the title field for the next entry
+        setTimeout(() => titleRef.current?.focus(), 100);
+    };
+
+    const handleQuickAdd = async (tpl: TransactionTemplate) => {
+        Keyboard.dismiss();
+        await addTransaction({
             type: 'expense',
             title: tpl.title,
             amount: tpl.amount,
@@ -50,19 +74,23 @@ export default function AddExpenseScreen({
             date: new Date().toISOString(),
             notes: tpl.notes,
         });
-        Alert.alert('Success', `Logged recurring expense: ${tpl.title}`);
-        navigation.goBack();
+        showToast(`✓ ${tpl.title} logged`);
     };
 
-    const handleAdd = async () => {
+    const handleCategorySelect = (catId: string) => {
+        Keyboard.dismiss();
+        setSelectedCategoryId(catId);
+    };
+
+    const handleAdd = useCallback(async () => {
         const titleCheck = validateTitle(title);
-        if (!titleCheck.valid) { Alert.alert('Validation', titleCheck.message); return; }
+        if (!titleCheck.valid) { showToast(titleCheck.message ?? 'Enter a title'); return; }
 
         const amountCheck = validateAmount(amount);
-        if (!amountCheck.valid) { Alert.alert('Validation', amountCheck.message); return; }
+        if (!amountCheck.valid) { showToast(amountCheck.message ?? 'Enter an amount'); return; }
 
         const catCheck = validateCategory(selectedCategoryId);
-        if (!catCheck.valid) { Alert.alert('Validation', catCheck.message); return; }
+        if (!catCheck.valid) { showToast(catCheck.message ?? 'Pick a category'); return; }
 
         await addTransaction({
             type: 'expense',
@@ -83,27 +111,55 @@ export default function AddExpenseScreen({
             });
         }
 
-        navigation.goBack();
-    };
+        showToast('✓ Expense saved');
+        resetForm();
+    }, [title, amount, selectedCategoryId, notes, saveAsRecurring, addTransaction, addTemplate]);
+
+    const handleBack = useCallback(() => {
+        if (hasUnsavedContent) {
+            Alert.alert(
+                'Discard changes?',
+                'You have unsaved content. Are you sure you want to go back?',
+                [
+                    { text: 'Stay', style: 'cancel' },
+                    { text: 'Discard', style: 'destructive', onPress: () => navigation.goBack() },
+                ]
+            );
+        } else {
+            navigation.goBack();
+        }
+    }, [hasUnsavedContent, navigation]);
 
     const isDark = settings.theme === 'dark';
-    const insets = useSafeAreaInsets();
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerLeft: () => (
+                <TouchableOpacity onPress={handleBack} style={{ paddingHorizontal: 10 }}>
+                    <Text style={{ color: '#ffffff', fontSize: 16 }}>✕</Text>
+                </TouchableOpacity>
+            ),
+            headerRight: () => (
+                <TouchableOpacity onPress={handleAdd} style={{ paddingHorizontal: 10 }}>
+                    <Text style={{ color: isDark ? '#b388ff' : '#ffffff', fontSize: 16, fontWeight: '700' }}>Save</Text>
+                </TouchableOpacity>
+            ),
+        });
+    }, [navigation, handleAdd, handleBack, isDark]);
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 + Math.max(insets.bottom, 0) }}>
-                {/* ── Header banner ── */}
-                <View style={[styles.banner, isDark && styles.bannerDark]}>
-                    <Text style={styles.bannerIcon}>🧾</Text>
-                    <Text style={[styles.bannerTitle, isDark && styles.bannerTitleDark]}>Record Expense</Text>
-                    <Text style={[styles.bannerSub, isDark && styles.bannerSubDark]}>Track where your money goes</Text>
-                </View>
+            <ScrollView
+                style={[styles.container, isDark && styles.containerDark]}
+                contentContainerStyle={{ paddingBottom: 100 }}
+                keyboardShouldPersistTaps="handled"
+            >
 
                 {/* ── Quick Add Recurring ── */}
                 {expenseTemplates.length > 0 && (
                     <View style={styles.recurringSection}>
                         <Text style={[styles.label, isDark && styles.labelDark]}>Quick Add Recurring</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recurringScroll}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recurringScroll} keyboardShouldPersistTaps="handled">
                             {expenseTemplates.map((tpl: TransactionTemplate) => (
                                 <TouchableOpacity
                                     key={tpl.id}
@@ -123,6 +179,8 @@ export default function AddExpenseScreen({
                 {/* ── Title ── */}
                 <Text style={[styles.label, isDark && styles.labelDark]}>Expense Title</Text>
                 <TextInput
+                    ref={titleRef}
+                    autoFocus={true}
                     placeholder="e.g. Lunch at café, Uber ride"
                     placeholderTextColor={isDark ? '#555' : '#999'}
                     value={title}
@@ -143,23 +201,14 @@ export default function AddExpenseScreen({
 
                 {/* ── Category picker ── */}
                 <Text style={[styles.label, isDark && styles.labelDark]}>Category</Text>
-                <TouchableOpacity
-                    style={[styles.row, isDark && styles.rowDark]}
-                    onPress={() => navigation.navigate('ManageCategories', { defaultTab: 'expense' })}
-                >
-                    <View style={styles.rowLeft}>
-                        <Tag color={isDark ? '#efefef' : '#333'} size={20} style={{ marginRight: 12 }} />
-                        <Text style={[styles.rowLabel, isDark && styles.textDark]}>Manage Categories</Text>
-                    </View>
-                    <ChevronRight color="#888" size={20} />
-                </TouchableOpacity>
+
                 <View style={styles.categoryGrid}>
                     {expenseCategories.map((cat: Category) => {
                         const isActive = selectedCategoryId === cat.id;
                         return (
                             <TouchableOpacity
                                 key={cat.id}
-                                onPress={() => setSelectedCategoryId(cat.id)}
+                                onPress={() => handleCategorySelect(cat.id)}
                                 style={[
                                     styles.categoryChip,
                                     isDark && styles.categoryChipDark,
@@ -180,17 +229,16 @@ export default function AddExpenseScreen({
                         );
                     })}
                 </View>
-
-                {/* ── Notes ── */}
-                <Text style={[styles.label, isDark && styles.labelDark]}>Notes (optional)</Text>
-                <TextInput
-                    placeholder="Any extra details..."
-                    placeholderTextColor={isDark ? '#555' : '#999'}
-                    value={notes}
-                    onChangeText={setNotes}
-                    multiline
-                    style={[styles.input, isDark && styles.inputDark, { height: 80, textAlignVertical: 'top' }]}
-                />
+                <TouchableOpacity
+                    style={[styles.row, isDark && styles.rowDark]}
+                    onPress={() => navigation.navigate('ManageCategories', { defaultTab: 'expense' })}
+                >
+                    <View style={styles.rowLeft}>
+                        <Tag color={isDark ? '#efefef' : '#333'} size={20} style={{ marginRight: 12 }} />
+                        <Text style={[styles.rowLabel, isDark && styles.textDark]}>Manage Categories</Text>
+                    </View>
+                    <ChevronRight color="#888" size={20} />
+                </TouchableOpacity>
 
                 {/* ── Save as Recurring ── */}
                 <View style={[styles.toggleRow, isDark && styles.toggleRowDark]}>
@@ -206,11 +254,19 @@ export default function AddExpenseScreen({
                     />
                 </View>
 
-                {/* ── Submit ── */}
-                <TouchableOpacity style={[styles.submitBtn, isDark && styles.submitBtnDark]} onPress={handleAdd}>
-                    <Text style={styles.submitText}>Add Expense</Text>
-                </TouchableOpacity>
+                {/* ── Notes ── */}
+                <Text style={[styles.label, isDark && styles.labelDark]}>Notes (optional)</Text>
+                <TextInput
+                    placeholder="Any extra details..."
+                    placeholderTextColor={isDark ? '#555' : '#999'}
+                    value={notes}
+                    onChangeText={setNotes}
+                    multiline
+                    style={[styles.input, isDark && styles.inputDark, { height: 80, textAlignVertical: 'top' }]}
+                />
+
             </ScrollView>
+            <Toast message={toastMessage} visible={toastVisible} onHide={() => setToastVisible(false)} />
         </KeyboardAvoidingView>
     );
 }
@@ -236,21 +292,6 @@ const styles = StyleSheet.create({
     rowLeft: { flexDirection: 'row', alignItems: 'center' },
     rowLabel: { fontSize: 16, color: '#333' },
     textDark: { color: '#efefef' },
-
-    // ── Banner ──
-    banner: {
-        backgroundColor: '#fce4ec',
-        borderRadius: 14,
-        padding: 20,
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    bannerDark: { backgroundColor: '#311019' },
-    bannerIcon: { fontSize: 36, marginBottom: 6 },
-    bannerTitle: { fontSize: 20, fontWeight: '700', color: '#c62828' },
-    bannerTitleDark: { color: '#ff8a80' },
-    bannerSub: { fontSize: 13, color: '#ef5350', marginTop: 4 },
-    bannerSubDark: { color: '#e57373' },
 
     // ── Quick Add Recurring ──
     recurringSection: { marginBottom: 16 },
@@ -343,15 +384,4 @@ const styles = StyleSheet.create({
     toggleLabel: { fontSize: 16, fontWeight: '600', color: '#333' },
     toggleSub: { fontSize: 12, color: '#888', marginTop: 2 },
     subTextDark: { color: '#aaa' },
-
-    // ── Submit ──
-    submitBtn: {
-        backgroundColor: '#6200ee',
-        borderRadius: 12,
-        paddingVertical: 16,
-        alignItems: 'center',
-        elevation: 3,
-    },
-    submitBtnDark: { backgroundColor: '#4527a0' },
-    submitText: { color: '#fff', fontSize: 18, fontWeight: '700' },
 });

@@ -18,13 +18,15 @@ type SettingsScreenNavigationProp = CompositeNavigationProp<
 >;
 
 export default function SettingsScreen({ navigation }: { navigation: SettingsScreenNavigationProp }) {
-    const { settings, updateSettings, deleteTemplate, importData } = useContext(ExpenseContext);
+    const { settings, updateSettings, deleteTemplate, importData, setProcessing } = useContext(ExpenseContext);
     const templates = useTemplates();
 
     const isDark = settings.theme === 'dark';
 
     const handleExport = async () => {
+        setProcessing(true);
         await exportBackup();
+        setProcessing(false);
     };
 
     const handleImport = async () => {
@@ -39,7 +41,9 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsScr
                         text: 'Restore',
                         style: 'destructive',
                         onPress: async () => {
+                            setProcessing(true);
                             const success = await importData(backupData);
+                            setProcessing(false);
                             if (success) {
                                 Alert.alert('Success', 'Backup restored successfully!');
                             } else {

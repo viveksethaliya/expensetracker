@@ -67,6 +67,7 @@ export type ThemeMode = 'light' | 'dark';
 export interface AppSettings {
     currency: string;
     theme: ThemeMode;
+    monthlyBudget: number;
 }
 
 export const DEFAULT_CATEGORIES: Category[] = [
@@ -87,6 +88,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
 export const DEFAULT_SETTINGS: AppSettings = {
     currency: '₹',
     theme: 'light',
+    monthlyBudget: 0,
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -116,8 +118,14 @@ export interface ExpenseContextType {
     settings: AppSettings;
     updateSettings: (patch: Partial<AppSettings>) => void;
 
+    // ── App State ──
+    hasLaunched: boolean;
+    completeOnboarding: () => Promise<void>;
+
     // ── Loading state ──
     isLoading: boolean;
+    isProcessing: boolean;
+    setProcessing: (processing: boolean) => void;
 }
 
 const noop = async () => { };
@@ -136,7 +144,11 @@ export const ExpenseContext = createContext<ExpenseContextType>({
     importData: async () => false,
     settings: DEFAULT_SETTINGS,
     updateSettings: () => { },
+    hasLaunched: true,
+    completeOnboarding: async () => { },
     isLoading: true,
+    isProcessing: false,
+    setProcessing: () => { },
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -146,6 +158,8 @@ export const ExpenseContext = createContext<ExpenseContextType>({
 export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => {
     const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
     const [isLoading, setIsLoading] = useState(true);
+    const [isProcessing, setProcessing] = useState(false);
+    const [hasLaunched, setHasLaunched] = useState(true);
 
     useEffect(() => {
         const initDB = async () => {
@@ -154,6 +168,9 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
             const storedSettings = await getItem<AppSettings>(STORAGE_KEYS.SETTINGS);
             if (storedSettings) setSettings(storedSettings);
 
+            const launched = await getItem<string>(STORAGE_KEYS.HAS_LAUNCHED);
+            setHasLaunched(launched === 'true');
+
             // Process any due subscriptions on app launch
             try { await processSubscriptions(); } catch (e) { console.warn('Startup subscription processing failed:', e); }
 
@@ -161,6 +178,11 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
         };
         initDB();
     }, []);
+
+    const completeOnboarding = async () => {
+        await setItem(STORAGE_KEYS.HAS_LAUNCHED, 'true');
+        setHasLaunched(true);
+    };
 
     const updateSettings = async (patch: Partial<AppSettings>) => {
         const newSettings = { ...settings, ...patch };
@@ -484,7 +506,11 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
         importData,
         settings,
         updateSettings,
+        hasLaunched,
+        completeOnboarding,
         isLoading,
+        isProcessing,
+        setProcessing,
     }), [
         addTransaction,
         updateTransaction,
@@ -499,7 +525,11 @@ export const ExpenseProvider = ({ children }: { children: React.ReactNode }) => 
         importData,
         settings,
         updateSettings,
-        isLoading
+        hasLaunched,
+        completeOnboarding,
+        isLoading,
+        isProcessing,
+        setProcessing
     ]);
 
     if (isLoading) {

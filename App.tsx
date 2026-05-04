@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -17,6 +17,7 @@ import ManageCategoriesScreen from './src/screens/ManageCategoriesScreen';
 import SubscriptionsScreen from './src/screens/SubscriptionsScreen';
 import ReportsScreen from './src/screens/ReportsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
 
 import { RootStackParamList, MainTabParamList } from './src/navigation/types';
 
@@ -93,7 +94,7 @@ function MainTabNavigator() {
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 function RootNavigator() {
-  const { settings } = React.useContext(ExpenseContext);
+  const { settings, hasLaunched } = React.useContext(ExpenseContext);
   const isDark = settings.theme === 'dark';
 
   return (
@@ -105,11 +106,19 @@ function RootNavigator() {
           headerTintColor: '#fff',
         }}
       >
-        <RootStack.Screen
-          name="MainTabs"
-          component={MainTabNavigator}
-          options={{ headerShown: false }}
-        />
+        {!hasLaunched ? (
+          <RootStack.Screen
+            name="Onboarding"
+            component={OnboardingScreen}
+            options={{ headerShown: false }}
+          />
+        ) : (
+          <RootStack.Screen
+            name="MainTabs"
+            component={MainTabNavigator}
+            options={{ headerShown: false }}
+          />
+        )}
         <RootStack.Screen
           name="AddExpense"
           component={AddExpenseScreen}
@@ -150,8 +159,24 @@ export default function App() {
     <SafeAreaProvider>
       <ExpenseProvider>
         <RootNavigator />
+        <ProcessingOverlay />
       </ExpenseProvider>
     </SafeAreaProvider>
+  );
+}
+
+function ProcessingOverlay() {
+  const { isProcessing, settings } = React.useContext(ExpenseContext);
+  if (!isProcessing) return null;
+  const isDark = settings.theme === 'dark';
+
+  return (
+    <View style={[StyleSheet.absoluteFill, styles.overlay]}>
+      <View style={[styles.processingBox, isDark && styles.processingBoxDark]}>
+        <ActivityIndicator size="large" color="#6200ee" />
+        <Text style={[styles.processingText, isDark && styles.processingTextDark]}>Processing...</Text>
+      </View>
+    </View>
   );
 }
 
@@ -167,5 +192,34 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     marginTop: 2,
+  },
+  overlay: {
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  processingBox: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  processingBoxDark: {
+    backgroundColor: '#2c2c2c',
+  },
+  processingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  processingTextDark: {
+    color: '#efefef',
   },
 });

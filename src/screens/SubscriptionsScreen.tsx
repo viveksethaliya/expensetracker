@@ -28,12 +28,6 @@ export default function SubscriptionsScreen({ navigation }: { navigation: Subscr
 
     return (
         <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 }}>
-            {/* ── Header ── */}
-            <View style={[styles.banner, isDark && styles.bannerDark]}>
-                <CreditCard color={isDark ? '#bb86fc' : '#6200ee'} size={32} style={{ marginBottom: 8 }} />
-                <Text style={[styles.bannerTitle, isDark && styles.textDark]}>Subscriptions & Recurring</Text>
-                <Text style={styles.bannerSub}>Manage your regular payments</Text>
-            </View>
 
             {/* ── Empty State ── */}
             {subscriptions.length === 0 ? (
@@ -92,18 +86,7 @@ export default function SubscriptionsScreen({ navigation }: { navigation: Subscr
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fcfcfc', padding: 16 },
     containerDark: { backgroundColor: '#121212' },
-
-    banner: {
-        backgroundColor: '#f3e5f5',
-        padding: 24,
-        borderRadius: 16,
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    bannerDark: { backgroundColor: '#2d1b36' },
-    bannerTitle: { fontSize: 20, fontWeight: '700', color: '#4a148c', textAlign: 'center' },
-    bannerSub: { fontSize: 13, color: '#7b1fa2', marginTop: 4 },
-    textDark: { color: '#efefef' },
+    textDark: { color: '#fcfcfc' },
 
     sectionTitle: {
         fontSize: 16,

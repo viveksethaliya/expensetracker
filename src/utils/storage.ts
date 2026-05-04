@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
     SETTINGS: '@expense_tracker/settings',
     TEMPLATES: '@expense_tracker/templates',
     SUBSCRIPTIONS: '@expense_tracker/subscriptions',
+    HAS_LAUNCHED: '@expense_tracker/has_launched',
 } as const;
 
 // ── Generic helpers ─────────────────────────────────────────────

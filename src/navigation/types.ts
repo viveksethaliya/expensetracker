@@ -2,6 +2,7 @@ import { Transaction } from '../context/ExpenseContext';
 
 // ── Route Parameter Types ──────────────────────────────────────────
 export type RootStackParamList = {
+    Onboarding: undefined;
     MainTabs: undefined;
     AddExpense: undefined;
     AddIncome: undefined;

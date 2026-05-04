@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useState, useCallback } from 'react';
 import { useTransactions, useCategories } from '../hooks/useData';
-import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 import { ExpenseContext, Transaction } from '../context/ExpenseContext';
 import TransactionModel from '../database/models/Transaction';
@@ -141,8 +141,8 @@ export default function ReportsScreen({ navigation }: { navigation: ReportsNavig
         </View>
     );
 
-    return (
-        <ScrollView style={[styles.container, isDark && styles.containerDark]} contentContainerStyle={{ paddingBottom: 40 }}>
+    const renderHeader = () => (
+        <>
             {/* ── Period Toggle ── */}
             <View style={styles.toggleRow}>
                 {(['month', 'year', 'all'] as const).map((p) => (
@@ -180,20 +180,21 @@ export default function ReportsScreen({ navigation }: { navigation: ReportsNavig
             )}
 
             {/* ── Summary Cards ── */}
-            <View style={styles.cardRow}>
-                <View style={[styles.card, isDark ? styles.compDark : { backgroundColor: '#e8f5e9' }]}>
-                    <Text style={[styles.cardLabel, isDark && styles.subTextDark]}>Income</Text>
-                    <Text style={[styles.cardValue, { color: isDark ? '#a5d6a7' : '#2e7d32' }]}>{settings.currency}{periodIncome.toFixed(0)}</Text>
+            <View style={[styles.summaryCard, isDark && styles.compDark]}>
+                <View style={styles.summaryCol}>
+                    <Text style={[styles.summaryLabel, isDark && styles.subTextDark]}>Income</Text>
+                    <Text style={[styles.summaryValue, { color: isDark ? '#a5d6a7' : '#2e7d32' }]} numberOfLines={1}>{settings.currency}{periodIncome.toFixed(0)}</Text>
                 </View>
-                <View style={[styles.card, isDark ? styles.compDark : { backgroundColor: '#fce4ec' }]}>
-                    <Text style={[styles.cardLabel, isDark && styles.subTextDark]}>Expenses</Text>
-                    <Text style={[styles.cardValue, { color: isDark ? '#ef9a9a' : '#c62828' }]}>{settings.currency}{periodExpenses.toFixed(0)}</Text>
+                <View style={[styles.summaryDivider, isDark && { backgroundColor: '#333' }]} />
+                <View style={styles.summaryCol}>
+                    <Text style={[styles.summaryLabel, isDark && styles.subTextDark]}>Expenses</Text>
+                    <Text style={[styles.summaryValue, { color: isDark ? '#ef9a9a' : '#c62828' }]} numberOfLines={1}>{settings.currency}{periodExpenses.toFixed(0)}</Text>
                 </View>
-            </View>
-
-            <View style={[styles.balanceCard, periodBalance >= 0 ? (isDark ? styles.positiveDark : styles.positive) : (isDark ? styles.negativeDark : styles.negative)]}>
-                <Text style={[styles.balanceLabel, isDark && styles.subTextDark]}>Net Balance</Text>
-                <Text style={[styles.balanceValue, isDark && styles.textDark]}>{settings.currency}{periodBalance.toFixed(2)}</Text>
+                <View style={[styles.summaryDivider, isDark && { backgroundColor: '#333' }]} />
+                <View style={styles.summaryCol}>
+                    <Text style={[styles.summaryLabel, isDark && styles.subTextDark]}>Net</Text>
+                    <Text style={[styles.summaryValue, periodBalance >= 0 ? { color: isDark ? '#a5d6a7' : '#2e7d32' } : { color: isDark ? '#ef9a9a' : '#c62828' }]} numberOfLines={1}>{settings.currency}{periodBalance.toFixed(0)}</Text>
+                </View>
             </View>
 
             {/* ── Expense Breakdown ── */}
@@ -230,36 +231,43 @@ export default function ReportsScreen({ navigation }: { navigation: ReportsNavig
                     </TouchableOpacity>
                 ))}
             </View>
+        </>
+    );
 
-            {/* List */}
-            {listTransactions.length === 0 ? (
-                <View style={[styles.emptyContainer, isDark && styles.compDark]}><Text style={[styles.emptyText, isDark && styles.subTextDark]}>No transactions found.</Text></View>
-            ) : (
-                <View style={{ marginHorizontal: 0 }}>
-                    {listTransactions.map((item: TransactionModel) => {
-                        const cat = getCategoryById(item.categoryId);
-                        const isExp = item.type === 'expense';
-                        return (
-                            <TouchableOpacity key={item.id} style={[styles.txnCard, isDark && styles.compDark]}
-                                onPress={() => navigation.navigate('EditTransaction', {
-                                    transaction: { id: item.id, type: item.type as 'income' | 'expense', title: item.title, amount: item.amount, categoryId: item.categoryId, date: item.date, notes: item.notes }
-                                })}>
-                                <View style={styles.txnLeft}>
-                                    <Text style={styles.txnIcon}>{cat?.icon ?? '📌'}</Text>
-                                    <View>
-                                        <Text style={[styles.txnTitle, isDark && styles.textDark]}>{item.title}</Text>
-                                        <Text style={styles.txnSub}>{cat?.name ?? 'Uncategorized'} · {new Date(item.date).toLocaleDateString()}</Text>
-                                    </View>
-                                </View>
-                                <Text style={[styles.txnAmount, { color: isExp ? '#ef9a9a' : '#a5d6a7' }]}>
-                                    {isExp ? '-' : '+'}{settings.currency}{item.amount.toFixed(2)}
-                                </Text>
-                            </TouchableOpacity>
-                        );
-                    })}
+    return (
+        <FlatList
+            style={[styles.container, isDark && styles.containerDark]}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            data={listTransactions}
+            keyExtractor={item => item.id}
+            ListHeaderComponent={renderHeader}
+            ListEmptyComponent={
+                <View style={[styles.emptyContainer, isDark && styles.compDark]}>
+                    <Text style={[styles.emptyText, isDark && styles.subTextDark]}>No transactions found.</Text>
                 </View>
-            )}
-        </ScrollView>
+            }
+            renderItem={({ item }) => {
+                const cat = getCategoryById(item.categoryId);
+                const isExp = item.type === 'expense';
+                return (
+                    <TouchableOpacity style={[styles.txnCard, isDark && styles.compDark]}
+                        onPress={() => navigation.navigate('EditTransaction', {
+                            transaction: { id: item.id, type: item.type as 'income' | 'expense', title: item.title, amount: item.amount, categoryId: item.categoryId, date: item.date, notes: item.notes }
+                        })}>
+                        <View style={styles.txnLeft}>
+                            <Text style={styles.txnIcon}>{cat?.icon ?? '📌'}</Text>
+                            <View>
+                                <Text style={[styles.txnTitle, isDark && styles.textDark]}>{item.title}</Text>
+                                <Text style={styles.txnSub}>{cat?.name ?? 'Uncategorized'} · {new Date(item.date).toLocaleDateString()}</Text>
+                            </View>
+                        </View>
+                        <Text style={[styles.txnAmount, { color: isExp ? '#ef9a9a' : '#a5d6a7' }]}>
+                            {isExp ? '-' : '+'}{settings.currency}{item.amount.toFixed(2)}
+                        </Text>
+                    </TouchableOpacity>
+                );
+            }}
+        />
     );
 }
 
@@ -284,15 +292,11 @@ const styles = StyleSheet.create({
     dateChipTextDark: { color: '#aaa' },
     dateChipTextActive: { color: '#fff' },
 
-    cardRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-    card: { flex: 1, borderRadius: 14, padding: 18, alignItems: 'center', elevation: 1 },
-    cardLabel: { fontSize: 13, color: '#666', marginBottom: 4, fontWeight: '500' },
-    cardValue: { fontSize: 24, fontWeight: '700' },
-    balanceCard: { borderRadius: 14, padding: 22, alignItems: 'center', marginBottom: 32, elevation: 1 },
-    positive: { backgroundColor: '#e8f5e9' }, negative: { backgroundColor: '#fce4ec' },
-    positiveDark: { backgroundColor: '#1b5e20' }, negativeDark: { backgroundColor: '#b71c1c' },
-    balanceLabel: { fontSize: 14, color: '#666', marginBottom: 4, fontWeight: '500' },
-    balanceValue: { fontSize: 32, fontWeight: '800', color: '#111' },
+    summaryCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 16, padding: 20, marginBottom: 24, elevation: 2, alignItems: 'center', justifyContent: 'space-between' },
+    summaryCol: { flex: 1, alignItems: 'center' },
+    summaryDivider: { width: 1, height: '80%', backgroundColor: '#e0e0e0', marginHorizontal: 8 },
+    summaryLabel: { fontSize: 13, color: '#666', marginBottom: 6, fontWeight: '500' },
+    summaryValue: { fontSize: 18, fontWeight: '700' },
     sectionTitle: { fontSize: 18, fontWeight: '700', color: '#222', marginBottom: 16, marginLeft: 4 },
     textDark: { color: '#efefef' }, subTextDark: { color: '#bbb' },
     chartContainer: { backgroundColor: '#fff', borderRadius: 16, paddingVertical: 16, alignItems: 'center', justifyContent: 'center', elevation: 2 },
